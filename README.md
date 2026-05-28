@@ -1,19 +1,12 @@
 <div align="center">
+  <img src="https://github.com/NeoNexus402/Loiter/raw/main/fastlane/metadata/android/en-US/images/loiter.png" width="150" alt="Loiter Logo">
+  <h1>Loiter</h1>
+  <p><b>An advanced YouTube Music client for Android</b></p>
+  
+  <a href="https://github.com/NeoNexus402/Loiter/releases"><img src="https://img.shields.io/github/v/release/NeoNexus402/Loiter?style=for-the-badge&labelColor=0d1117" alt="Latest Release"></a>
+  <a href="https://github.com/NeoNexus402/Loiter/blob/main/LICENSE"><img src="https://img.shields.io/github/license/NeoNexus402/Loiter?style=for-the-badge&labelColor=0d1117" alt="License"></a>
 
-<img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/loiter.png" alt="Loiter app icon" width="200" />
-
-# Loiter
-
-### YouTube Music client for Android — Fork of Metrolist
-
-<br/>
-
-[![Latest release](https://img.shields.io/github/v/release/NeoNexus402/Loiter?style=for-the-badge&labelColor=0d1117)](https://github.com/NeoNexus402/Loiter/releases)
-[![License](https://img.shields.io/github/license/NeoNexus402/Loiter?style=for-the-badge&labelColor=0d1117)](https://github.com/NeoNexus402/Loiter/blob/main/LICENSE)
-
-<br/>
-
-[**Features**](#features) · [**FAQ**](#faq) · [**Screenshots**](#screenshots)
+[**Features**](#features) · [**Screenshots**](#screenshots)
 
 </div>
 
@@ -166,13 +159,15 @@
   </tr>
 </table>
 
+</div>
+
+
 ### Coming Soon
 - Additional layout themes
 - More MiniPlayer and Player layout options
 - Expanded theme customization controls
 - Performance optimizations and stability improvements
 
-</div>
 
 ---
 
@@ -191,29 +186,12 @@
 
 ---
 
-<div align="center">
-
-<h1><a id="translations"></a>Translations</h1>
-
-[![Translation status](https://img.shields.io/weblate/progress/metrolist?style=for-the-badge&labelColor=0d1117)](https://hosted.weblate.org/engage/metrolist/)
-
-<h3>We use Weblate to translate Metrolist. <a href="https://hosted.weblate.org/projects/Metrolist/">Help us bring Loiter to more people!</a></h3>
-
-<a href="https://hosted.weblate.org/projects/Metrolist/">
-  <img src="https://hosted.weblate.org/widget/Metrolist/horizontal-auto.svg" alt="Translation status" />
-</a>
-
-<h3>Thank you very much. Every translation makes Loiter a little more accessible to someone, somewhere in the world!</h3>
-
-</div>
-
----
 
 <div align="center">
 
 <h1>Special Thanks</h1>
 
-<h3>Loiter stands on the shoulders of incredible open-source work!</h3>
+<h3>Loiter was only possible for these people!</h3>
 
 <h3>Main Inspirations</h3>
  
@@ -274,20 +252,6 @@
 </table>
 
 <h3>We also thank the entire open-source community! Every library, tool, and API that powers this project!</h3>
-
-</div>
-
----
-
-<div align="center">
-
-<h1>Contributors</h1>
-
-<h3>This project wouldn't exist without these amazing people!</h3>
-
-<a href="https://github.com/NeoNexus402/Loiter/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=NeoNexus402/Loiter" alt="Contributors"/>
-</a>
 
 </div>
 
