@@ -51,10 +51,11 @@
     <td width="50%" valign="top">
 
 ### Layout Themes
-- **Loiter** — Material 3 with dynamic colors (default)
-- **YouTube Music** — Inspired by YouTube Music, compact controls
-- **Spotify** — Inspired by Spotify, bold typography, gradient player
-- **Blackhole** — Inspired by Blackhole, large artwork, wave animations
+- **Loiter** — Coming Soon
+- **YouTube Music** — Coming Soon
+- **Spotify** — Coming Soon
+- **Blackhole** — Inspired by Blackhole.
+- **Metrolist** — Inspired by Metrolist.
 - Each theme locks irrelevant settings automatically
 
 </td>
@@ -315,11 +316,7 @@ All trademarks, service marks, and intellectual property rights referenced in th
 ---
 
 <div align="center">
-
-<br/>
-
-**Forked and maintained by [NeoNexus402](https://github.com/NeoNexus402)**
-
-**Originally made with ❤️ by [Mo Agamy](https://github.com/mostafaalagamy)**
-
+  <b>Loiter</b> is maintained by Ratul Acharya (<a href="https://github.com/NeoNexus402">@NeoNexus402</a>).<br>
+  <i>Made with ❤️ in Bangladesh.</i><br><br>
+  <sup>Originally forked from Metrolist by <a href="https://github.com/mostafaalagamy">Mo Agamy</a>. Thanks to the entire open-source community for the tools and APIs that power this project!</sup>
 </div>
