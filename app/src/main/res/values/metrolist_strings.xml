@@ -850,7 +850,7 @@
     <string name="credits_collaborators_section">Collaborators</string>
     <string name="credits_license_name">GNU General Public License v3.0</string>
     <string name="credits_license_desc">Free, open-source software. You may use, study, share, and improve it</string>
-    <string name="credits_discord">Discord server</string>
+    <string name="credits_discord">Discord</string>
     <string name="credits_telegram">Telegram channel</string>
     <string name="credits_website">Website</string>
     <string name="credits_instagram">Instagram</string>
@@ -858,12 +858,15 @@
     <string name="credits_view_repo">View repository</string>
     <string name="app_version_info">%1$s • %2$s</string>
     <string name="like_what_i_do">Like what I do?</string>
-    <string name="buy_mo_a_coffee">Buy me a coffee!</string>
+    <string name="buy_mo_a_coffee">Buy me a coffee</string>
     <string name="community_and_info">Community &amp; Info</string>
     <string name="metrolist">LOITER</string>
     <string name="wanna_play_favorite_song">Want to play their favorite song?</string>
     <string name="yeah">Yeah!</string>
     <string name="stands_with_palestine">This project stands with Palestine 🇵🇸</string>
+    <string name="feature_coming_soon">Coming soon</string>
+    <string name="inspired_by">Project inspired by</string>
+    <string name="inspired_by_metrolist_desc">The original Metrolist project that Loiter is forked from</string>
 
     <!-- Podcasts -->
     <string name="filter_podcasts">Podcasts</string>

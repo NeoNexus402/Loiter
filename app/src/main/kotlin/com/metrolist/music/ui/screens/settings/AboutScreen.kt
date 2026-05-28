@@ -6,7 +6,6 @@
 package com.metrolist.music.ui.screens.settings
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,9 +24,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -35,7 +31,6 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -43,7 +38,6 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -53,12 +47,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
@@ -90,36 +81,26 @@ private data class Contributor(
     val githubHandle: String,
     val avatarUrl: String = "https://github.com/$githubHandle.png",
     val githubUrl: String = "https://github.com/$githubHandle",
+    val avatarRes: Int? = null,
     val polygon: RoundedPolygon? = null,
     val favoriteSongVideoId: String? = null
 )
 
-private data class CommunityLink(
-    val labelRes: Int,
-    val iconRes: Int,
-    val url: String
-)
-
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private val leadDeveloper = Contributor(
-    name = "Mo Agamy",
+    name = "Ratul Acharya",
     roleRes = R.string.credits_lead_developer,
-    githubHandle = "mostafaalagamy",
+    githubHandle = "NeoNexus402",
+    avatarRes = R.drawable.profile_ratul,
     polygon = MaterialShapes.Cookie9Sided,
-    favoriteSongVideoId = "Mh2JWGWvy_Y"
+    favoriteSongVideoId = "CzCv0nbM8pM"
 )
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private val collaborators = listOf(
+    Contributor(name = "Mo Agamy", roleRes = R.string.credits_collaborator, githubHandle = "mostafaalagamy", polygon = MaterialShapes.Cookie9Sided, favoriteSongVideoId = "Mh2JWGWvy_Y"),
     Contributor(name = "Adriel O'Connel", roleRes = R.string.credits_collaborator, githubHandle = "adrielGGmotion", polygon = MaterialShapes.Cookie4Sided, favoriteSongVideoId = "m2zUrruKjDQ"),
     Contributor(name = "Nyx", roleRes = R.string.credits_collaborator, githubHandle = "nyxiereal", polygon = MaterialShapes.Cookie12Sided, favoriteSongVideoId = "zselaN6zPXw"),
-)
-
-private val communityLinks = listOf(
-    CommunityLink(R.string.credits_discord, R.drawable.discord, "https://discord.com/invite/zrdbeRG2Mt"),
-    CommunityLink(R.string.credits_telegram, R.drawable.telegram, "https://t.me/metrolistapp"),
-    CommunityLink(R.string.credits_view_repo, R.drawable.github, "https://github.com/NeoNexus402/Loiter"),
-    CommunityLink(R.string.credits_license_name, R.drawable.info, "https://github.com/NeoNexus402/Loiter/blob/main/LICENSE")
 )
 
 private fun handleEasterEggClick(
@@ -154,6 +135,7 @@ private fun handleEasterEggClick(
 @Composable
 private fun ContributorAvatar(
     avatarUrl: String,
+    avatarRes: Int?,
     sizeDp: Int,
     modifier: Modifier = Modifier,
     shape: Shape = CircleShape,
@@ -169,43 +151,23 @@ private fun ContributorAvatar(
         color = MaterialTheme.colorScheme.surfaceContainerHighest,
         tonalElevation = 4.dp,
     ) {
-        AsyncImage(
-            model = avatarUrl,
-            contentDescription = contentDescription,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
-            placeholder = fallback,
-            fallback = fallback,
-            error = fallback,
-        )
-    }
-}
-
-@Composable
-private fun DeveloperSocials(
-    uriHandler: androidx.compose.ui.platform.UriHandler
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        FilledTonalButton(
-            onClick = { uriHandler.openUri("https://metrolist.meowery.eu") },
-            modifier = Modifier.weight(1f).height(48.dp)
-        ) {
-            Icon(painterResource(R.drawable.language), contentDescription = null)
-        }
-        FilledTonalButton(
-            onClick = { uriHandler.openUri("https://github.com/mostafaalagamy") },
-            modifier = Modifier.weight(1f).height(48.dp)
-        ) {
-            Icon(painterResource(R.drawable.github), contentDescription = null)
-        }
-        FilledTonalButton(
-            onClick = { uriHandler.openUri("https://www.instagram.com/mostafaalagamy") },
-            modifier = Modifier.weight(1f).height(48.dp)
-        ) {
-            Icon(painterResource(R.drawable.instagram), contentDescription = null)
+        if (avatarRes != null) {
+            Image(
+                painter = painterResource(avatarRes),
+                contentDescription = contentDescription,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            AsyncImage(
+                model = avatarUrl,
+                contentDescription = contentDescription,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+                placeholder = fallback,
+                fallback = fallback,
+                error = fallback,
+            )
         }
     }
 }
@@ -221,7 +183,7 @@ fun AboutScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val wannaPlayStr = stringResource(R.string.wanna_play_favorite_song)
     val yeahStr = stringResource(R.string.yeah)
-    
+
     val windowInsets = LocalPlayerAwareWindowInsets.current
 
     Column(
@@ -260,9 +222,9 @@ fun AboutScreen(
                     ),
                     modifier = Modifier.size(64.dp)
                 )
-        
+
                 Spacer(Modifier.width(20.dp))
-        
+
                 Column {
                     val metrolistName = stringResource(R.string.metrolist)
                         .lowercase(Locale.getDefault())
@@ -275,9 +237,9 @@ fun AboutScreen(
                         color = MaterialTheme.colorScheme.onSurface,
                         letterSpacing = (-0.5).sp
                     )
-            
+
                     Spacer(Modifier.height(8.dp))
-            
+
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -293,7 +255,7 @@ fun AboutScreen(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
-                        
+
                         Surface(
                             shape = RoundedCornerShape(8.dp),
                             color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
@@ -342,9 +304,10 @@ fun AboutScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     var leadClickCount by remember(leadDeveloper.name) { mutableIntStateOf(0) }
-            
+
                     ContributorAvatar(
                         avatarUrl = leadDeveloper.avatarUrl,
+                        avatarRes = leadDeveloper.avatarRes,
                         sizeDp = 110,
                         shape = leadDeveloper.polygon?.toShape() ?: CircleShape,
                         contentDescription = leadDeveloper.name,
@@ -381,32 +344,79 @@ fun AboutScreen(
                         )
                     }
                 }
-                
+
                 Spacer(Modifier.height(24.dp))
-                
-                DeveloperSocials(uriHandler)
-                
-                Spacer(Modifier.height(16.dp))
-                
-                Button(
-                    onClick = { uriHandler.openUri("https://buymeacoffee.com/mostafaalagamy") },
+
+                // Social links
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Icon(painterResource(R.drawable.buymeacoffee), contentDescription = null, modifier = Modifier.size(20.dp))
-                    Spacer(Modifier.width(12.dp))
-                    Text(stringResource(R.string.buy_mo_a_coffee), fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                    FilledTonalButton(
+                        onClick = { uriHandler.openUri("https://github.com/NeoNexus402") },
+                        modifier = Modifier.weight(1f).height(48.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.github),
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    FilledTonalButton(
+                        onClick = { uriHandler.openUri("https://www.instagram.com/ratulacharya4/") },
+                        modifier = Modifier.weight(1f).height(48.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.instagram),
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    FilledTonalButton(
+                        onClick = { uriHandler.openUri("https://discord.com/users/868515482213429288") },
+                        modifier = Modifier.weight(1f).height(48.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.discord),
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                // Buy me a coffee
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.buymeacoffee),
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = stringResource(R.string.feature_coming_soon),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
                 }
             }
         }
 
         Spacer(Modifier.height(32.dp))
-        
-        // Collaborators section - back to Material3SettingsGroup
+
+        // Collaborators section
         Material3SettingsGroup(
             title = stringResource(R.string.credits_collaborators_section),
             items = collaborators.map { contributor ->
@@ -415,6 +425,7 @@ fun AboutScreen(
                         var clickCount by remember(contributor.name) { mutableIntStateOf(0) }
                         ContributorAvatar(
                             avatarUrl = contributor.avatarUrl,
+                            avatarRes = contributor.avatarRes,
                             sizeDp = 48,
                             shape = contributor.polygon?.toShape() ?: CircleShape,
                             contentDescription = contributor.name,
@@ -447,32 +458,37 @@ fun AboutScreen(
             }
         )
 
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(24.dp))
 
-        // Community & Info using standard Group
+        // Project inspired by
         Material3SettingsGroup(
-            title = stringResource(R.string.community_and_info),
-            items = communityLinks.map { link ->
+            title = stringResource(R.string.inspired_by),
+            items = listOf(
                 Material3SettingsItem(
-                    icon = painterResource(link.iconRes),
-                    title = { Text(stringResource(link.labelRes), fontWeight = FontWeight.SemiBold) },
-                    description = if (link.labelRes == R.string.credits_license_name) {
-                        { Text(stringResource(R.string.credits_license_desc)) }
-                    } else null,
-                    onClick = { uriHandler.openUri(link.url) }
+                    title = { Text("Metrolist") },
+                    description = { Text(stringResource(R.string.inspired_by_metrolist_desc)) },
+                    trailingContent = {
+                        Icon(
+                            painter = painterResource(R.drawable.github),
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    onClick = { uriHandler.openUri("https://github.com/MetrolistGroup/Metrolist") }
                 )
-            }
+            )
         )
 
         Spacer(Modifier.height(48.dp))
-        
+
         Text(
             text = stringResource(R.string.stands_with_palestine),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        
+
         Spacer(Modifier.height(48.dp))
     }
 
