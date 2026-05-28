@@ -93,15 +93,11 @@ private val leadDeveloper = Contributor(
     githubHandle = "NeoNexus402",
     avatarRes = R.drawable.profile_ratul,
     polygon = MaterialShapes.Cookie9Sided,
-    favoriteSongVideoId = "CzCv0nbM8pM"
+    favoriteSongVideoId = "xfGrN3ZsPLA"
 )
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private val collaborators = listOf(
-    Contributor(name = "Mo Agamy", roleRes = R.string.credits_collaborator, githubHandle = "mostafaalagamy", polygon = MaterialShapes.Cookie9Sided, favoriteSongVideoId = "Mh2JWGWvy_Y"),
-    Contributor(name = "Adriel O'Connel", roleRes = R.string.credits_collaborator, githubHandle = "adrielGGmotion", polygon = MaterialShapes.Cookie4Sided, favoriteSongVideoId = "m2zUrruKjDQ"),
-    Contributor(name = "Nyx", roleRes = R.string.credits_collaborator, githubHandle = "nyxiereal", polygon = MaterialShapes.Cookie12Sided, favoriteSongVideoId = "zselaN6zPXw"),
-)
+private val collaborators = emptyList<Contributor>()
 
 private fun handleEasterEggClick(
     clickCount: Int,
