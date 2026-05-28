@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/icon.png" alt="Loiter app icon" width="200" />
+<img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/loiter.png" alt="Loiter app icon" width="200" />
 
 # Loiter
 
