@@ -193,16 +193,6 @@
 
 <div align="center">
 
-<h1><a id="faq"></a>FAQ</h1>
-
-<h3>Got questions? Check out our <a href="https://metrolist.cc/#faq">FAQ page</a> for answers to the most common ones!</h3>
-
-</div>
-
----
-
-<div align="center">
-
 <h1><a id="translations"></a>Translations</h1>
 
 [![Translation status](https://img.shields.io/weblate/progress/metrolist?style=for-the-badge&labelColor=0d1117)](https://hosted.weblate.org/engage/metrolist/)
