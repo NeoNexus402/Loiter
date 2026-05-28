@@ -7,7 +7,11 @@ package com.metrolist.music.ui.component
 
 import android.graphics.BlurMaskFilter
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -51,8 +55,11 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -90,6 +97,46 @@ private fun String.containsRtl(): Boolean {
         }
     }
     return false
+}
+
+/**
+ * Selects one focus word per lyric line for Blackhole's selective-highlight
+ * rendering.  The algorithm:
+ * 1. Among words >=4 chars containing at least one letter, pick the longest
+ *    that has NOT been selected on a previous line (thematic variety).
+ * 2. If all candidates have been used before, pick the longest among them.
+ * 3. If no suitable word exists, use the last word on the line.
+ *
+ * Background (vocal-adlib) lines are skipped.
+ */
+internal fun selectFocusWords(lines: List<LyricsEntry>): Map<Int, Int> {
+    val usedWords = mutableSetOf<String>()
+    val result = mutableMapOf<Int, Int>()
+    for ((idx, entry) in lines.withIndex()) {
+        if (entry.isBackground) continue
+        val text = entry.text.trim()
+        if (text.isEmpty()) continue
+        val rawWords = text.split(Regex("\\s+")).filter { it.isNotBlank() }
+        if (rawWords.isEmpty()) continue
+        val candidates = rawWords.indices.filter { i ->
+            val w = rawWords[i].trimEnd(',', '.', '!', '?', ';', ':', ')', ']', '}')
+            w.length >= 4 && w.any { it.isLetter() }
+        }
+        if (candidates.isEmpty()) {
+            result[idx] = rawWords.lastIndex
+            continue
+        }
+        val unused = candidates.filter { i ->
+            rawWords[i].trimEnd(',', '.', '!', '?', ';', ':', ')', ']', '}').lowercase() !in usedWords
+        }
+        val chosenIdx = (if (unused.isNotEmpty()) unused else candidates)
+            .maxByOrNull { rawWords[it].trimEnd(',', '.', '!', '?', ';', ':', ')', ']', '}').length }
+            ?: candidates.last()
+        val chosenWord = rawWords[chosenIdx].trimEnd(',', '.', '!', '?', ';', ':', ')', ']', '}').lowercase()
+        usedWords.add(chosenWord)
+        result[idx] = chosenIdx
+    }
+    return result
 }
 
 /**
@@ -136,6 +183,9 @@ internal fun LyricsLine(
     romanizeAsMain: Boolean,
     enabledLanguages: List<String>,
     romanizeLyrics: Boolean,
+    focusWordIndex: Int? = null,
+    mutedColor: Color? = null,
+    highlightColor: Color? = null,
     onSizeChanged: (Int) -> Unit,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
@@ -266,14 +316,60 @@ internal fun LyricsLine(
                         expressiveAccent = expressiveAccent,
                         isBackground = item.isBackground,
                         focusedAlpha = focusedAlpha,
-                        alignment = agentTextAlign
+                        alignment = agentTextAlign,
+                        focusWordIndex = focusWordIndex,
+                        mutedColor = mutedColor,
+                        highlightColor = highlightColor
                     )
                 } else {
-                    Text(
-                        text = mainText ?: "",
-                        style = lyricStyle.copy(color = if (isActiveLine) expressiveAccent else lineColor),
-                        modifier = Modifier.fillMaxWidth()
+                    val infiniteTransition = rememberInfiniteTransition()
+                    val focusPulseAnim by infiniteTransition.animateFloat(
+                        initialValue = 1f,
+                        targetValue = if (focusWordIndex != null && mutedColor != null && isActiveLine) 1.06f else 1f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(1300),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "focusPulse"
                     )
+                    if (focusWordIndex != null && mutedColor != null && mainText != null) {
+                        val focusColor = highlightColor ?: expressiveAccent
+                        val annotated = remember(mainText, focusWordIndex, mutedColor, focusColor, isActiveLine) {
+                            val words = mainText.split(Regex("\\s+")).filter { it.isNotBlank() }
+                            buildAnnotatedString {
+                                words.forEachIndexed { i, w ->
+                                    val isFocus = i == focusWordIndex
+                                    val color = if (isFocus) {
+                                        if (isActiveLine) focusColor else focusColor.copy(alpha = 0.6f)
+                                    } else {
+                                        if (isActiveLine) mutedColor else mutedColor.copy(alpha = 0.6f)
+                                    }
+                                    withStyle(SpanStyle(color = color)) { append(w) }
+                                    if (i < words.lastIndex) append(" ")
+                                }
+                            }
+                        }
+                        Text(
+                            text = annotated,
+                            style = lyricStyle.copy(color = Color.Unspecified),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .then(
+                                    if (isActiveLine) {
+                                        Modifier.graphicsLayer {
+                                            scaleX = focusPulseAnim
+                                            scaleY = focusPulseAnim
+                                        }
+                                    } else Modifier
+                                )
+                        )
+                    } else {
+                        Text(
+                            text = mainText ?: "",
+                            style = lyricStyle.copy(color = if (isActiveLine) expressiveAccent else lineColor),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
                 
                 if (romanizeLyrics && enabledLanguages.isNotEmpty()) {
@@ -330,7 +426,10 @@ private fun WordLevelLyrics(
     expressiveAccent: Color,
     isBackground: Boolean,
     focusedAlpha: Float,
-    alignment: TextAlign
+    alignment: TextAlign,
+    focusWordIndex: Int? = null,
+    mutedColor: Color? = null,
+    highlightColor: Color? = null
 ) {
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
@@ -519,8 +618,32 @@ private fun WordLevelLyrics(
             )
         ) {
             if (mainText.isEmpty()) return@Canvas
+            
+            // Precompute which clusters belong to the focus word (Blackhole mode)
+            val isFocusCluster = if (focusWordIndex != null) {
+                val (wim, _, _) = charToWordData
+                BooleanArray(clusterCount) { i ->
+                    val wIdx = wim[i]
+                    wIdx != -1 && effectiveToOriginalIdx[wIdx] == focusWordIndex
+                }
+            } else null
+            val focusColor = highlightColor ?: expressiveAccent
+            val pulseScale = 1f + (sin(System.currentTimeMillis() * 0.003).coerceAtLeast(0.0)).toFloat() * 0.06f
+            
             if (!isActiveLine) {
-                drawText(layoutResult, color = lineColor)
+                if (isFocusCluster != null && mutedColor != null) {
+                    for (i in 0 until clusterCount) {
+                        val charBounds = layoutResult.getBoundingBox(clusterCharOffsets[i])
+                        translate(left = charBounds.left, top = charBounds.top) {
+                            drawText(
+                                letterLayouts[i],
+                                color = if (isFocusCluster[i]) focusColor.copy(alpha = 0.5f) else mutedColor.copy(alpha = 0.5f)
+                            )
+                        }
+                    }
+                } else {
+                    drawText(layoutResult, color = lineColor)
+                }
             } else {
                 if (isRtlText) {
                     val (wordIdxMap, _, _) = charToWordData
@@ -535,37 +658,52 @@ private fun WordLevelLyrics(
                         Triple(sungFactor, isWordSung, isWordActive)
                     }
 
-                    drawText(layoutResult, color = lineColor.copy(alpha = focusedAlpha))
-
-                    effectiveWords.indices.forEach { wIdx ->
-                        val (sungFactor, isWordSung, isWordActive) = wordFactors[wIdx]
-                        
-                        var left = Float.MAX_VALUE
-                        var right = Float.MIN_VALUE
-                        var top = Float.MAX_VALUE
-                        var bottom = Float.MIN_VALUE
-                        var found = false
-
+                    if (isFocusCluster != null && mutedColor != null) {
                         for (i in 0 until clusterCount) {
-                            if (wordIdxMap[i] == wIdx) {
-                                val charOffset = clusterCharOffsets[i]
-                                val bounds = layoutResult.getBoundingBox(charOffset)
-                                left = minOf(left, bounds.left)
-                                right = maxOf(right, bounds.right)
-                                top = minOf(top, bounds.top)
-                                bottom = maxOf(bottom, bounds.bottom)
-                                found = true
+                            val charBounds = layoutResult.getBoundingBox(clusterCharOffsets[i])
+                            translate(left = charBounds.left, top = charBounds.top) {
+                                drawText(
+                                    letterLayouts[i],
+                                    color = if (isFocusCluster[i]) focusColor.copy(alpha = 0.6f) else mutedColor.copy(alpha = 0.6f)
+                                )
                             }
                         }
+                    } else {
+                        drawText(layoutResult, color = lineColor.copy(alpha = focusedAlpha))
+                    }
 
-                        if (found) {
-                            if (isWordSung) {
-                                clipRect(left = left, top = top, right = right, bottom = bottom) {
-                                    drawText(layoutResult, color = expressiveAccent)
+                    effectiveWords.indices.forEach { wIdx ->
+                        val isFocusWord = focusWordIndex != null && wIdx != -1 && focusWordIndex == effectiveToOriginalIdx[wIdx]
+                        if (focusWordIndex == null || isFocusWord) {
+                            val (sungFactor, isWordSung, isWordActive) = wordFactors[wIdx]
+                            
+                            var left = Float.MAX_VALUE
+                            var right = Float.MIN_VALUE
+                            var top = Float.MAX_VALUE
+                            var bottom = Float.MIN_VALUE
+                            var found = false
+
+                            for (i in 0 until clusterCount) {
+                                if (wordIdxMap[i] == wIdx) {
+                                    val charOffset = clusterCharOffsets[i]
+                                    val bounds = layoutResult.getBoundingBox(charOffset)
+                                    left = minOf(left, bounds.left)
+                                    right = maxOf(right, bounds.right)
+                                    top = minOf(top, bounds.top)
+                                    bottom = maxOf(bottom, bounds.bottom)
+                                    found = true
                                 }
-                            } else if (isWordActive && sungFactor > 0f) {
-                                clipRect(left = left, top = top, right = right, bottom = bottom) {
-                                    drawText(layoutResult, color = expressiveAccent.copy(alpha = focusedAlpha + (1f - focusedAlpha) * sungFactor))
+                            }
+
+                            if (found) {
+                                if (isWordSung) {
+                                    clipRect(left = left, top = top, right = right, bottom = bottom) {
+                                        drawText(layoutResult, color = focusColor)
+                                    }
+                                } else if (isWordActive && sungFactor > 0f) {
+                                    clipRect(left = left, top = top, right = right, bottom = bottom) {
+                                        drawText(layoutResult, color = focusColor.copy(alpha = focusedAlpha + (1f - focusedAlpha) * sungFactor))
+                                    }
                                 }
                             }
                         }
@@ -606,6 +744,7 @@ private fun WordLevelLyrics(
                     val lineIdx = layoutResult.getLineForOffset(charOffset)
                     val wordIdx = wordIdxMap[i]
                     val originalWordIdx = if (wordIdx != -1) effectiveToOriginalIdx[wordIdx] else -1
+                    val isFocusClusterIdx = isFocusCluster != null && isFocusCluster[i]
                     
                     val (sungFactor, wordItem, isWordSung) = if (wordIdx != -1) wordFactors[wordIdx] else Triple(0f, null, false)
                     val wobble = if (originalWordIdx != -1) wordWobbles[originalWordIdx] else 0f
@@ -648,11 +787,11 @@ private fun WordLevelLyrics(
                         0.038f * sin(charLp * PI.toFloat()) * exp(-3f * charLp)
                     } else 0f
 
-                    val charScaleX = 1f + (wobble * 0.025f) + crescendoDeltaX + (nudgeScale * 0.3f)
+                    val charScaleX = (1f + (wobble * 0.025f) + crescendoDeltaX + (nudgeScale * 0.3f)) * if (isFocusClusterIdx && isActiveLine) pulseScale else 1f
                     val charBounds = layoutResult.getBoundingBox(charOffset)
                     lineTotalPushes[lineIdx] += charBounds.width * (charScaleX - 1f)
                 }
-
+                
                 // Main drawing loop: iterate over cluster indices so each visual
                 // glyph (including multi-codepoint Devanagari clusters) is one unit.
                 for (i in 0 until clusterCount) {
@@ -661,6 +800,7 @@ private fun WordLevelLyrics(
                     val charBounds = layoutResult.getBoundingBox(charOffset)
                     val wordIdx = wordIdxMap[i]
                     val originalWordIdx = if (wordIdx != -1) effectiveToOriginalIdx[wordIdx] else -1
+                    val isFocusClusterIdx = isFocusCluster != null && isFocusCluster[i]
                     
                     val alignShift = when(alignment) {
                         TextAlign.Center -> -lineTotalPushes[lineIdx] / 2f
@@ -720,8 +860,8 @@ private fun WordLevelLyrics(
                         nudgeStrength * sin(charLp * PI.toFloat()) * exp(-3f * charLp)
                     } else 0f
                     
-                    val charScaleX = 1f + wobbleX + crescendoDeltaX + nudgeScale * 0.3f
-                    val charScaleY = 1f + wobbleY + crescendoDeltaY + nudgeScale
+                    val charScaleX = (1f + wobbleX + crescendoDeltaX + nudgeScale * 0.3f) * if (isFocusClusterIdx && isActiveLine) pulseScale else 1f
+                    val charScaleY = (1f + wobbleY + crescendoDeltaY + nudgeScale) * if (isFocusClusterIdx && isActiveLine) pulseScale else 1f
 
                     withTransform({
                         var waveOffset = 0f
@@ -748,7 +888,7 @@ private fun WordLevelLyrics(
                             )
                         }
                     }) {
-                        if (shouldGlow) {
+                        if (shouldGlow && (isFocusCluster == null || isFocusClusterIdx)) {
                             val sMs = wordItem.startTime * 1000
                             val eMs = wordItem.endTime * 1000
                             val dur = eMs - sMs
@@ -761,7 +901,7 @@ private fun WordLevelLyrics(
                                 val baseGlowRadius = 12.dp.toPx() * impactFactor                                                                                    
                                 drawIntoCanvas { canvas ->
                                     glowPaint.maskFilter = BlurMaskFilter(baseGlowRadius, BlurMaskFilter.Blur.NORMAL)
-                                    glowPaint.color = expressiveAccent.copy(alpha = glowAlpha).toArgb()
+                                    glowPaint.color = focusColor.copy(alpha = glowAlpha).toArgb()
                                     glowPaint.textSize = lyricStyle.fontSize.toPx()
                                     glowPaint.typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
                                     canvas.nativeCanvas.drawText(letterLayouts[i].layoutInput.text.text, 0f, letterLayouts[i].firstBaseline, glowPaint)
@@ -769,19 +909,26 @@ private fun WordLevelLyrics(
                             }
                         }
                         val baseAlpha = if (isWordSung || charLp > 0.99f) 1f else (focusedAlpha + (1f - focusedAlpha) * sungFactor)
-                        drawText(letterLayouts[i], color = expressiveAccent.copy(alpha = if (wordIdx == -1) focusedAlpha else baseAlpha))
-                        if (!isWordSung && charLp > 0f && charLp < 1f) {
+                        val clusterAlpha = if (wordIdx == -1) focusedAlpha else baseAlpha
+                        if (isFocusClusterIdx && mutedColor != null) {
+                            drawText(letterLayouts[i], color = focusColor.copy(alpha = clusterAlpha))
+                        } else if (isFocusCluster != null && mutedColor != null) {
+                            drawText(letterLayouts[i], color = mutedColor.copy(alpha = clusterAlpha))
+                        } else {
+                            drawText(letterLayouts[i], color = expressiveAccent.copy(alpha = clusterAlpha))
+                        }
+                        if (!isWordSung && charLp > 0f && charLp < 1f && (isFocusCluster == null || isFocusClusterIdx)) {
                             val fXL = charBounds.width * charLp
                             val eW = (charBounds.width * 0.45f).coerceAtLeast(1f)
                             val sWL = (fXL - eW).coerceAtLeast(0f)
                             if (sWL > 0f) {
-                                clipRect(left = 0f, top = 0f, right = sWL, bottom = charBounds.height) { drawText(letterLayouts[i], color = expressiveAccent) }
+                                clipRect(left = 0f, top = 0f, right = sWL, bottom = charBounds.height) { drawText(letterLayouts[i], color = focusColor) }
                             }
                             for (j in 0 until 12) {
                                 val start = sWL + (j * eW / 12f)
                                 val end = (sWL + ((j + 1) * eW / 12f) + 0.5f).coerceAtMost(fXL)
                                 if (end > start) {
-                                    clipRect(left = start, top = 0f, right = end, bottom = charBounds.height) { drawText(letterLayouts[i], color = expressiveAccent.copy(alpha = 1f - (j + 0.5f) / 12f)) }
+                                    clipRect(left = start, top = 0f, right = end, bottom = charBounds.height) { drawText(letterLayouts[i], color = focusColor.copy(alpha = 1f - (j + 0.5f) / 12f)) }
                                 }
                             }
                         }

@@ -13,6 +13,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,7 +23,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -47,6 +51,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -63,6 +69,7 @@ import com.metrolist.music.constants.DensityScale
 import com.metrolist.music.constants.DensityScaleKey
 import com.metrolist.music.constants.DynamicThemeKey
 import com.metrolist.music.constants.EnableDynamicIconKey
+import com.metrolist.music.constants.LayoutThemeKey
 import com.metrolist.music.constants.EnableHighRefreshRateKey
 import com.metrolist.music.constants.ExperimentalLyricsKey
 import com.metrolist.music.constants.GridItemSize
@@ -85,6 +92,7 @@ import com.metrolist.music.constants.PlayerBackgroundStyle
 import com.metrolist.music.constants.PlayerBackgroundStyleKey
 import com.metrolist.music.constants.PlayerButtonsStyle
 import com.metrolist.music.constants.PlayerButtonsStyleKey
+import com.metrolist.music.constants.BlackholeColorKey
 import com.metrolist.music.constants.PureBlackMiniPlayerKey
 import com.metrolist.music.constants.RespectAgentPositioningKey
 import com.metrolist.music.constants.SelectedThemeColorKey
@@ -112,7 +120,9 @@ import com.metrolist.music.ui.component.PlayerSliderTrack
 import com.metrolist.music.ui.component.SquigglySlider
 import com.metrolist.music.ui.component.WavySlider
 import com.metrolist.music.ui.theme.DefaultThemeColor
+import com.metrolist.music.ui.theme.LayoutTheme
 import com.metrolist.music.ui.theme.PlayerSliderColors
+import com.metrolist.music.ui.theme.configForTheme
 import com.metrolist.music.ui.utils.backToMain
 import com.metrolist.music.utils.IconUtils
 import com.metrolist.music.utils.rememberEnumPreference
@@ -150,6 +160,23 @@ fun AppearanceSettings(
         )
     // Check if user has selected a custom color (not the default/dynamic color)
     val isUsingCustomColor = selectedThemeColorInt != DefaultThemeColor.toArgb()
+    val (currentLayoutThemeRaw, onLayoutThemeChange) =
+        rememberEnumPreference(LayoutThemeKey, defaultValue = LayoutTheme.METROLIST)
+    // Migrate old "LOITER" stored value to "METROLIST"
+    val currentLayoutTheme = remember(currentLayoutThemeRaw) {
+        if (currentLayoutThemeRaw.name == "LOITER") LayoutTheme.METROLIST else currentLayoutThemeRaw
+    }
+    val (blackholeSeedColorInt, onBlackholeSeedColorChange) = rememberPreference(
+        BlackholeColorKey, defaultValue = Color(0xFF1DB954).toArgb(),
+    )
+    val blackholeSeedColor = remember(blackholeSeedColorInt) { Color(blackholeSeedColorInt) }
+    val themeConfig = remember(currentLayoutTheme, blackholeSeedColor) { configForTheme(currentLayoutTheme, blackholeSeedColor) }
+    val effectiveDynamicTheme = remember(dynamicTheme, themeConfig) {
+        if (themeConfig.lockDynamicTheme) false else dynamicTheme
+    }
+    val effectiveIsUsingCustomColor = remember(themeConfig, isUsingCustomColor) {
+        if (themeConfig.lockDynamicTheme) true else isUsingCustomColor
+    }
     val coroutineScope = rememberCoroutineScope()
 
     fun handleIconChange(enabled: Boolean) {
@@ -172,11 +199,14 @@ fun AppearanceSettings(
         }
     }
 
-    val (useNewPlayerDesign, onUseNewPlayerDesignChange) =
+    val (useNewPlayerDesignPref, onUseNewPlayerDesignChange) =
         rememberPreference(
             UseNewPlayerDesignKey,
             defaultValue = true,
         )
+    val useNewPlayerDesign = remember(useNewPlayerDesignPref, themeConfig) {
+        if (themeConfig.lockNewPlayerDesign) false else useNewPlayerDesignPref
+    }
     val (miniPlayerBackground, onMiniPlayerBackgroundChange) =
         rememberEnumPreference(
             MiniPlayerBackgroundStyleKey,
@@ -190,11 +220,14 @@ fun AppearanceSettings(
 
     var showMiniPlayerBackgroundDialog by rememberSaveable { mutableStateOf(false) }
 
-    val (useNewMiniPlayerDesign, onUseNewMiniPlayerDesignChange) =
+    val (useNewMiniPlayerDesignPref, onUseNewMiniPlayerDesignChange) =
         rememberPreference(
             UseNewMiniPlayerDesignKey,
             defaultValue = true,
         )
+    val useNewMiniPlayerDesign = remember(useNewMiniPlayerDesignPref, themeConfig) {
+        if (themeConfig.lockNewMiniPlayerDesign) false else useNewMiniPlayerDesignPref
+    }
     val (hidePlayerThumbnail, onHidePlayerThumbnailChange) =
         rememberPreference(
             HidePlayerThumbnailKey,
@@ -372,7 +405,15 @@ fun AppearanceSettings(
     var showPlayerButtonsStyleDialog by rememberSaveable {
         mutableStateOf(false)
     }
-
+    var showLayoutThemeDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
+    var showComingSoonDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
+    var showBlackholeColorDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
     var showLyricsPositionDialog by rememberSaveable {
         mutableStateOf(false)
     }
@@ -564,6 +605,91 @@ fun AppearanceSettings(
                 }
             },
         )
+    }
+
+    if (showComingSoonDialog) {
+        DefaultDialog(
+            onDismiss = { showComingSoonDialog = false },
+            buttons = {
+                TextButton(onClick = { showComingSoonDialog = false }) {
+                    Text("OK")
+                }
+            },
+        ) {
+            Text(
+                text = "Coming Soon",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(bottom = 16.dp),
+            )
+            Text(
+                text = "This theme is not yet available. Stay tuned for future updates!",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+    }
+
+    if (showLayoutThemeDialog) {
+        EnumDialog(
+            onDismiss = { showLayoutThemeDialog = false },
+            onSelect = {
+                if (it.isComingSoon) {
+                    showLayoutThemeDialog = false
+                    showComingSoonDialog = true
+                } else {
+                    onLayoutThemeChange(it)
+                    showLayoutThemeDialog = false
+                }
+            },
+            title = "Layout Theme",
+            current = currentLayoutTheme,
+            values = LayoutTheme.values().toList(),
+            valueText = { it.displayName },
+            valueDescription = { if (it.isComingSoon) { "Coming soon" } else null },
+        )
+    }
+
+    if (showBlackholeColorDialog) {
+        DefaultDialog(
+            onDismiss = { showBlackholeColorDialog = false },
+            buttons = {
+                TextButton(onClick = { showBlackholeColorDialog = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        ) {
+            Column {
+                Text(
+                    text = "Blackhole Accent Color",
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(bottom = 16.dp),
+                )
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    items(PaletteColors.drop(1)) { palette ->
+                        val isSelected = palette.seedColor.toArgb() == blackholeSeedColorInt
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .then(
+                                    if (isSelected) {
+                                        Modifier.border(3.dp, Color.White, CircleShape)
+                                    } else {
+                                        Modifier.border(1.dp, Color(0xFF555555), CircleShape)
+                                    }
+                                )
+                                .background(palette.seedColor)
+                                .clickable {
+                                    val newColor = palette.seedColor
+                                    onBlackholeSeedColorChange(newColor.toArgb())
+                                    showBlackholeColorDialog = false
+                                },
+                        )
+                    }
+                }
+            }
+        }
     }
 
     if (showPlayerBackgroundDialog) {
@@ -1024,20 +1150,21 @@ fun AppearanceSettings(
                     )
                     // Only show dynamic theme option when using the default/dynamic color
                     // When a custom color is selected, dynamic theme is automatically disabled
-                    if (!isUsingCustomColor) {
+                    if (!effectiveIsUsingCustomColor) {
                         add(
                             Material3SettingsItem(
                                 icon = painterResource(R.drawable.palette),
                                 title = { Text(stringResource(R.string.enable_dynamic_theme)) },
                                 trailingContent = {
                                     Switch(
-                                        checked = dynamicTheme,
-                                        onCheckedChange = onDynamicThemeChange,
+                                        checked = effectiveDynamicTheme,
+                                        onCheckedChange = { if (!themeConfig.lockDynamicTheme) onDynamicThemeChange(it) },
+                                        enabled = !themeConfig.lockDynamicTheme,
                                         thumbContent = {
                                             Icon(
                                                 painter =
                                                     painterResource(
-                                                        id = if (dynamicTheme) R.drawable.check else R.drawable.close,
+                                                        id = if (effectiveDynamicTheme) R.drawable.check else R.drawable.close,
                                                     ),
                                                 contentDescription = null,
                                                 modifier = Modifier.size(SwitchDefaults.IconSize),
@@ -1045,7 +1172,7 @@ fun AppearanceSettings(
                                         },
                                     )
                                 },
-                                onClick = { onDynamicThemeChange(!dynamicTheme) },
+                                onClick = { if (!themeConfig.lockDynamicTheme) onDynamicThemeChange(!effectiveDynamicTheme) },
                             ),
                         )
                     }
@@ -1054,9 +1181,36 @@ fun AppearanceSettings(
                             icon = painterResource(R.drawable.palette),
                             title = { Text(stringResource(R.string.theme)) },
                             description = { Text(stringResource(R.string.theme_desc)) },
+                            enabled = !themeConfig.lockThemeOverview,
                             onClick = { navController.navigate("settings/appearance/theme") },
                         ),
                     )
+                    add(
+                        Material3SettingsItem(
+                            icon = painterResource(R.drawable.grid_view),
+                            title = { Text("Layout Theme") },
+                            description = { Text(currentLayoutTheme.displayName) },
+                            onClick = { showLayoutThemeDialog = true },
+                        ),
+                    )
+                    if (currentLayoutTheme == LayoutTheme.BLACKHOLE) {
+                        add(
+                            Material3SettingsItem(
+                                icon = painterResource(R.drawable.palette),
+                                title = { Text(stringResource(R.string.blackhole_accent_color)) },
+                                onClick = { showBlackholeColorDialog = true },
+                                trailingContent = {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .clip(CircleShape)
+                                            .background(blackholeSeedColor)
+                                            .border(1.dp, Color(0xFF555555), CircleShape)
+                                    )
+                                },
+                            ),
+                        )
+                    }
                 },
         )
 
@@ -1079,7 +1233,8 @@ fun AppearanceSettings(
                             trailingContent = {
                                 Switch(
                                     checked = useNewMiniPlayerDesign,
-                                    onCheckedChange = onUseNewMiniPlayerDesignChange,
+                                    onCheckedChange = { if (!themeConfig.lockNewMiniPlayerDesign) onUseNewMiniPlayerDesignChange(it) },
+                                    enabled = !themeConfig.lockNewMiniPlayerDesign,
                                     thumbContent = {
                                         Icon(
                                             painter =
@@ -1092,7 +1247,7 @@ fun AppearanceSettings(
                                     },
                                 )
                             },
-                            onClick = { onUseNewMiniPlayerDesignChange(!useNewMiniPlayerDesign) },
+                            onClick = { if (!themeConfig.lockNewMiniPlayerDesign) onUseNewMiniPlayerDesignChange(!useNewMiniPlayerDesign) },
                         ),
                     )
                     add(
@@ -1151,7 +1306,8 @@ fun AppearanceSettings(
                         trailingContent = {
                             Switch(
                                 checked = useNewPlayerDesign,
-                                onCheckedChange = onUseNewPlayerDesignChange,
+                                onCheckedChange = { if (!themeConfig.lockNewPlayerDesign) onUseNewPlayerDesignChange(it) },
+                                enabled = !themeConfig.lockNewPlayerDesign,
                                 thumbContent = {
                                     Icon(
                                         painter =
@@ -1164,7 +1320,7 @@ fun AppearanceSettings(
                                 },
                             )
                         },
-                        onClick = { onUseNewPlayerDesignChange(!useNewPlayerDesign) },
+                        onClick = { if (!themeConfig.lockNewPlayerDesign) onUseNewPlayerDesignChange(!useNewPlayerDesign) },
                     ),
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.gradient),
@@ -1236,6 +1392,7 @@ fun AppearanceSettings(
                                 },
                             )
                         },
+                        enabled = !themeConfig.lockPlayerStyle,
                         onClick = { showPlayerButtonsStyleDialog = true },
                     ),
                     Material3SettingsItem(
@@ -1264,6 +1421,7 @@ fun AppearanceSettings(
                                 },
                             )
                         },
+                        enabled = !themeConfig.lockSliderStyle,
                         onClick = { showSliderOptionDialog = true },
                     ),
                     Material3SettingsItem(
@@ -1681,6 +1839,7 @@ fun AppearanceSettings(
                             Switch(
                                 checked = slimNav,
                                 onCheckedChange = onSlimNavChange,
+                                enabled = !themeConfig.lockSlimNavBar,
                                 thumbContent = {
                                     Icon(
                                         painter =
@@ -1693,6 +1852,7 @@ fun AppearanceSettings(
                                 },
                             )
                         },
+                        enabled = !themeConfig.lockSlimNavBar,
                         onClick = { onSlimNavChange(!slimNav) },
                     ),
                     Material3SettingsItem(

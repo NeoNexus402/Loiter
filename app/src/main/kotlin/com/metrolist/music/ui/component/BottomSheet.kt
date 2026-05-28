@@ -112,21 +112,23 @@ fun BottomSheet(
                 clip = true
             }
     ) {
-        if (!state.isCollapsed && !state.isDismissed) {
-            BackHandler(onBack = state::collapseSoft)
+        BackHandler(enabled = !state.isDismissed) {
+            if (state.isExpanded) {
+                state.collapseSoft()
+            } else {
+                state.dismiss()
+            }
         }
 
-        // main content
-        if (!state.isCollapsed) {
-            BoxWithConstraints(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer {
-                        alpha = ((state.progress - 0.15f) * 4).coerceIn(0f, 1f)
-                    },
-                content = content
-            )
-        }
+        // main content - always composed to avoid composition delay on expand
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    alpha = if (state.isCollapsed) 0f else ((state.progress - 0.15f) * 4).coerceIn(0f, 1f)
+                },
+            content = content
+        )
 
         if (!state.isExpanded && (onDismiss == null || !state.isDismissed)) {
             Box(

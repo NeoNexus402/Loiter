@@ -28,10 +28,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
+import com.metrolist.music.ui.theme.LocalLayoutThemeConfig
 import androidx.compose.ui.unit.dp
 
 /**
@@ -51,10 +54,11 @@ fun Material3SettingsGroup(
     ) {
         // Section title
         title?.let {
+            val sectionAccentColor = LocalLayoutThemeConfig.current.effectiveAccentColor ?: MaterialTheme.colorScheme.primary
             Text(
                 text = it,
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
+                color = sectionAccentColor,
                 modifier = Modifier.padding(bottom = 8.dp, top = 8.dp)
             )
         }
@@ -100,6 +104,8 @@ fun Material3SettingsGroup(
 private fun Material3SettingsItemRow(
     item: Material3SettingsItem
 ) {
+    val settingsAccentColor = LocalLayoutThemeConfig.current.effectiveAccentColor ?: MaterialTheme.colorScheme.primary
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -120,7 +126,7 @@ private fun Material3SettingsItemRow(
                     .size(40.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(
-                        MaterialTheme.colorScheme.primary.copy(
+                        settingsAccentColor.copy(
                             alpha = if (item.isHighlighted) 0.15f else 0.1f
                         )
                     ),
@@ -140,9 +146,9 @@ private fun Material3SettingsItemRow(
                             tint = if (!item.enabled)
                                 MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                             else if (item.isHighlighted)
-                                MaterialTheme.colorScheme.primary
+                                settingsAccentColor
                             else
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
+                                settingsAccentColor.copy(alpha = 0.9f),
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -153,9 +159,9 @@ private fun Material3SettingsItemRow(
                         tint = if (!item.enabled)
                             MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                         else if (item.isHighlighted)
-                            MaterialTheme.colorScheme.primary
+                            settingsAccentColor
                         else
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
+                            settingsAccentColor.copy(alpha = 0.9f),
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -207,6 +213,7 @@ private fun Material3SettingsItemRow(
 /**
  * Data class for Material 3 settings item
  */
+@Stable
 data class Material3SettingsItem(
     val icon: Painter? = null,
     val leadingContent: (@Composable () -> Unit)? = null,

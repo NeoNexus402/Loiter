@@ -133,6 +133,7 @@ import com.metrolist.music.constants.DisableScreenshotKey
 import com.metrolist.music.constants.DynamicThemeKey
 import com.metrolist.music.constants.EnableHighRefreshRateKey
 import com.metrolist.music.constants.ExperimentalLyricsKey
+import com.metrolist.music.constants.LayoutThemeKey
 import com.metrolist.music.constants.LastSeenVersionKey
 import com.metrolist.music.constants.ListenTogetherInTopBarKey
 import com.metrolist.music.constants.ListenTogetherUsernameKey
@@ -145,6 +146,7 @@ import com.metrolist.music.constants.PauseListenHistoryKey
 import com.metrolist.music.constants.PauseSearchHistoryKey
 import com.metrolist.music.constants.PreferredLyricsProvider
 import com.metrolist.music.constants.PreferredLyricsProviderKey
+import com.metrolist.music.constants.BlackholeColorKey
 import com.metrolist.music.constants.PureBlackKey
 import com.metrolist.music.constants.SYSTEM_DEFAULT
 import com.metrolist.music.constants.SelectedThemeColorKey
@@ -152,6 +154,7 @@ import com.metrolist.music.constants.SimpMusicMigrationDoneKey
 import com.metrolist.music.constants.SlimNavBarHeight
 import com.metrolist.music.constants.SlimNavBarKey
 import com.metrolist.music.constants.StopMusicOnTaskClearKey
+import com.metrolist.music.constants.ThumbnailCornerRadius
 import com.metrolist.music.constants.UpdateNotificationsEnabledKey
 import com.metrolist.music.constants.UseNewMiniPlayerDesignKey
 import com.metrolist.music.db.MusicDatabase
@@ -182,7 +185,12 @@ import com.metrolist.music.ui.screens.settings.DarkMode
 import com.metrolist.music.ui.screens.settings.NavigationTab
 import com.metrolist.music.ui.theme.ColorSaver
 import com.metrolist.music.ui.theme.DefaultThemeColor
+import com.metrolist.music.ui.theme.LayoutTheme
+import com.metrolist.music.ui.theme.LocalLayoutTheme
+import com.metrolist.music.ui.theme.LocalLayoutThemeConfig
+import com.metrolist.music.ui.theme.MiniPlayerLayout
 import com.metrolist.music.ui.theme.MetrolistTheme
+import com.metrolist.music.ui.theme.configForTheme
 import com.metrolist.music.ui.theme.extractThemeColor
 import com.metrolist.music.ui.utils.appBarScrollBehavior
 import com.metrolist.music.ui.utils.resetHeightOffset
@@ -525,7 +533,17 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        val currentLayoutThemeRaw by rememberEnumPreference(LayoutThemeKey, defaultValue = LayoutTheme.METROLIST)
+        val currentLayoutTheme = remember(currentLayoutThemeRaw) {
+            if (currentLayoutThemeRaw.name == "LOITER") LayoutTheme.METROLIST else currentLayoutThemeRaw
+        }
+        val (blackholeSeedColorInt) = rememberPreference(BlackholeColorKey, defaultValue = Color(0xFF1DB954).toArgb())
+        val blackholeSeedColor = remember(blackholeSeedColorInt) { Color(blackholeSeedColorInt) }
         val enableDynamicTheme by rememberPreference(DynamicThemeKey, defaultValue = true)
+        val layoutThemeConfig = remember(currentLayoutTheme, blackholeSeedColor) { configForTheme(currentLayoutTheme, blackholeSeedColor) }
+        val effectiveEnableDynamicTheme = remember(enableDynamicTheme, layoutThemeConfig) {
+            if (layoutThemeConfig.lockDynamicTheme) false else enableDynamicTheme
+        }
         val enableHighRefreshRate by rememberPreference(EnableHighRefreshRateKey, defaultValue = true)
 
         LaunchedEffect(enableHighRefreshRate) {
@@ -559,8 +577,11 @@ class MainActivity : ComponentActivity() {
         val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
         val isSystemInDarkTheme = isSystemInDarkTheme()
         val useDarkTheme =
-            remember(darkTheme, isSystemInDarkTheme) {
-                if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
+            remember(darkTheme, isSystemInDarkTheme, currentLayoutTheme, blackholeSeedColor) {
+                val layoutThemeConfig = configForTheme(currentLayoutTheme, blackholeSeedColor)
+                if (layoutThemeConfig.forceDarkTheme) true
+                else if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme
+                else darkTheme == DarkMode.ON
             }
 
         LaunchedEffect(useDarkTheme) {
@@ -574,7 +595,15 @@ class MainActivity : ComponentActivity() {
             }
 
         val (selectedThemeColorInt) = rememberPreference(SelectedThemeColorKey, defaultValue = DefaultThemeColor.toArgb())
-        val selectedThemeColor = Color(selectedThemeColorInt)
+        val userSelectedThemeColor = Color(selectedThemeColorInt)
+        val isNonLoiterTheme = currentLayoutTheme != LayoutTheme.METROLIST
+        val selectedThemeColor = remember(userSelectedThemeColor, layoutThemeConfig, currentLayoutTheme) {
+            val seed = layoutThemeConfig.seedColor
+            // For non-Loiter themes, the theme color seed doesn't matter because
+            // MetrolistTheme uses an explicitly neutral color scheme. The accent colors
+            // are applied manually via accentColor from LayoutThemeConfig.
+            seed ?: userSelectedThemeColor
+        }
 
         val showChangelog = rememberSaveable { mutableStateOf(false) }
 
@@ -585,14 +614,14 @@ class MainActivity : ComponentActivity() {
         val themeColorCache = remember { mutableMapOf<String, Color>() }
 
         LaunchedEffect(selectedThemeColor) {
-            if (!enableDynamicTheme) {
+            if (!effectiveEnableDynamicTheme) {
                 themeColor = selectedThemeColor
             }
         }
 
-        LaunchedEffect(playerConnection, enableDynamicTheme, selectedThemeColor) {
+        LaunchedEffect(playerConnection, effectiveEnableDynamicTheme, selectedThemeColor, isNonLoiterTheme) {
             val playerConnection = playerConnection
-            if (!enableDynamicTheme || playerConnection == null) {
+            if (!effectiveEnableDynamicTheme || playerConnection == null || isNonLoiterTheme) {
                 themeColor = selectedThemeColor
                 return@LaunchedEffect
             }
@@ -640,6 +669,8 @@ class MainActivity : ComponentActivity() {
             darkTheme = useDarkTheme,
             pureBlack = pureBlack,
             themeColor = themeColor,
+            forceBlackBackground = layoutThemeConfig.forceBlackBackground,
+            useNeutralScheme = isNonLoiterTheme,
         ) {
             BoxWithConstraints(
                 modifier =
@@ -772,13 +803,17 @@ class MainActivity : ComponentActivity() {
                     label = "navBarHeight",
                 )
 
+                val miniPlayerBottomSpacing =
+                    if (useNewMiniPlayerDesign && layoutThemeConfig.miniPlayerLayout != MiniPlayerLayout.OVERLAY &&
+                        currentLayoutTheme == LayoutTheme.METROLIST
+                    ) MiniPlayerBottomSpacing else 0.dp
                 val playerBottomSheetState =
                     rememberBottomSheetState(
                         dismissedBound = 0.dp,
                         collapsedBound =
                             bottomInset +
                                 (if (!showRail && shouldShowNavigationBar) navPadding else 0.dp) +
-                                (if (useNewMiniPlayerDesign) MiniPlayerBottomSpacing else 0.dp) +
+                                miniPlayerBottomSpacing +
                                 MiniPlayerHeight,
                         expandedBound = maxHeight,
                     )
@@ -958,6 +993,12 @@ class MainActivity : ComponentActivity() {
 
                 val baseBg = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer
 
+                val layoutThemeConfig = remember(currentLayoutTheme, blackholeSeedColor) { configForTheme(currentLayoutTheme, blackholeSeedColor) }
+
+                LaunchedEffect(layoutThemeConfig) {
+                    ThumbnailCornerRadius = layoutThemeConfig.cardCornerRadius
+                }
+
                 CompositionLocalProvider(
                     LocalDatabase provides database,
                     LocalContentColor provides if (pureBlack) Color.White else contentColorFor(MaterialTheme.colorScheme.surface),
@@ -968,6 +1009,8 @@ class MainActivity : ComponentActivity() {
                     LocalSyncUtils provides syncUtils,
                     LocalListenTogetherManager provides listenTogetherManager,
                     LocalChangelogState provides showChangelog,
+                    LocalLayoutTheme provides currentLayoutTheme,
+                    LocalLayoutThemeConfig provides layoutThemeConfig,
                 ) {
                     if (showChangelog.value) {
                         ChangelogScreen(onDismiss = { showChangelog.value = false })

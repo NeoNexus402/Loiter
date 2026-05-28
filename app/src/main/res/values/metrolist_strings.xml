@@ -438,6 +438,7 @@
     <string name="pure_black_mini_player">Pure black mini-player</string>
     <string name="mini_player_background_style">Mini-player background style</string>
     <string name="transparent">Transparent</string>
+    <string name="blackhole_accent_color">Blackhole Color Scheme</string>
     <string name="mini_player_background_not_available">Unavailable when the new mini-player design is disabled</string>
     <string name="cache_size_warning_title">Hold on!</string>
     <string name="cache_size_warning_message">The limit you\'ve chosen (%1$s) is smaller than what the app is currently using. Continuing may cause some cached %2$s to be removed. Proceed anyway?</string>
@@ -962,4 +963,26 @@
     <string name="widget_playlists">Playlists</string>
     <string name="widget_playlists_description">Playlist shortcuts with mini-player controls</string>
     <string name="choose_something_below">Choose something below</string>
+    <string name="layout_themes_force_dark_mode_hint">Dark mode is forced by the current layout theme</string>
+
+    <!-- Playlist Import -->
+    <string name="playlist_import">Import playlists</string>
+    <string name="playlist_import_desc">Import playlists from CSV or JSON files</string>
+    <string name="playlist_import_progress">Importing… %1$d / %2$d</string>
+    <string name="playlist_import_done">Import complete!</string>
+    <string name="playlist_import_searching">Searching YouTube Music…</string>
+    <string name="playlist_import_success">Imported %1$d songs from \"%2$s\"</string>
+    <string name="playlist_import_cancelled">Import cancelled</string>
+
+    <!-- Playlist File Import -->
+    <string name="playlist_import_file">Import from file</string>
+    <string name="playlist_import_file_title">Import from file</string>
+    <string name="playlist_import_file_export_instructions_title">How to export your playlists</string>
+    <string name="playlist_import_select_file">Select CSV/JSON File</string>
+    <string name="playlist_import_file_parsed">Found %1$d songs</string>
+    <string name="playlist_import_file_no_songs">No songs found in the file</string>
+    <string name="playlist_import_file_invalid">Could not parse the file. Make sure it is a valid CSV or JSON file.</string>
+    <string name="playlist_import_file_create_playlist">Create playlist</string>
+    <string name="playlist_import_file_playlist_name_placeholder">Playlist name</string>
+    <string name="done">Done</string>
 </resources>

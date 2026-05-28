@@ -31,6 +31,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.metrolist.music.ui.screens.Screens
+import com.metrolist.music.ui.theme.LocalLayoutThemeConfig
+import com.metrolist.music.ui.theme.NavBarStyle
+import com.metrolist.music.ui.theme.LayoutTheme
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.NavigationRailItemDefaults
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 
@@ -66,6 +71,7 @@ fun AppNavigationRail(
     val containerColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer
     val haptics = LocalHapticFeedback.current
     val viewConfiguration = LocalViewConfiguration.current
+    val themeConfig = LocalLayoutThemeConfig.current
 
     NavigationRail(
         modifier = modifier,
@@ -111,6 +117,12 @@ fun AppNavigationRail(
                 }
             }
 
+            val navAccentColor = themeConfig.effectiveAccentColor ?: MaterialTheme.colorScheme.primary
+            val railColors = NavigationRailItemDefaults.colors(
+                indicatorColor = navAccentColor.copy(alpha = 0.15f),
+                selectedIconColor = navAccentColor,
+            )
+
             NavigationRailItem(
                 selected = isSelected,
                 onClick = {
@@ -125,7 +137,8 @@ fun AppNavigationRail(
                         painter = painterResource(id = iconRes),
                         contentDescription = stringResource(screen.titleId)
                     )
-                }
+                },
+                colors = railColors,
             )
         }
 
@@ -147,10 +160,15 @@ fun AppNavigationBar(
     val contentColor = if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
     val haptics = LocalHapticFeedback.current
     val viewConfiguration = LocalViewConfiguration.current
+    val themeConfig = LocalLayoutThemeConfig.current
+    val navStyle = themeConfig.navBarStyle
 
     NavigationBar(
         modifier = modifier,
-        containerColor = containerColor,
+        containerColor = when (navStyle) {
+            NavBarStyle.PILL -> if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainerHigh
+            else -> containerColor
+        },
         contentColor = contentColor
     ) {
         navigationItems.forEach { screen ->
@@ -191,6 +209,12 @@ fun AppNavigationBar(
                 }
             }
 
+            val navAccentColor = themeConfig.effectiveAccentColor ?: MaterialTheme.colorScheme.primary
+            val itemColors = NavigationBarItemDefaults.colors(
+                indicatorColor = navAccentColor.copy(alpha = 0.15f),
+                selectedIconColor = navAccentColor,
+            )
+
             NavigationBarItem(
                 selected = isSelected,
                 onClick = {
@@ -214,7 +238,8 @@ fun AppNavigationBar(
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-                } else null
+                } else null,
+                colors = itemColors,
             )
         }
     }

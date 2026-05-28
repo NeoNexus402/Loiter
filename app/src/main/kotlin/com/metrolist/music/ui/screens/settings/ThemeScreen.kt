@@ -73,13 +73,16 @@ import androidx.navigation.NavController
 import com.materialkolor.PaletteStyle
 import com.materialkolor.rememberDynamicColorScheme
 import com.metrolist.music.R
+import com.metrolist.music.constants.LayoutThemeKey
 import com.metrolist.music.constants.DarkModeKey
 import com.metrolist.music.constants.DynamicThemeKey
 import com.metrolist.music.constants.PureBlackKey
 import com.metrolist.music.constants.PureBlackMiniPlayerKey
 import com.metrolist.music.constants.SelectedThemeColorKey
 import com.metrolist.music.ui.theme.DefaultThemeColor
+import com.metrolist.music.ui.theme.LayoutTheme
 import com.metrolist.music.ui.theme.MetrolistTheme
+import com.metrolist.music.ui.theme.configForTheme
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
 
@@ -118,6 +121,13 @@ fun ThemeScreen(
 ) {
     val (darkMode, onDarkModeChange) = rememberEnumPreference(DarkModeKey, DarkMode.AUTO)
     val (pureBlack, onPureBlackChangeRaw) = rememberPreference(PureBlackKey, defaultValue = false)
+    val (layoutThemeRaw) = rememberEnumPreference(LayoutThemeKey, defaultValue = LayoutTheme.METROLIST)
+    val layoutTheme = remember(layoutThemeRaw) {
+        if (layoutThemeRaw.name == "LOITER") LayoutTheme.METROLIST else layoutThemeRaw
+    }
+    val themeConfig = remember(layoutTheme) { configForTheme(layoutTheme) }
+    val darkModeLocked = themeConfig.forceDarkTheme
+    val themeColorsLocked = themeConfig.lockDynamicTheme
     val (_, onPureBlackMiniPlayerChange) = rememberPreference(
         PureBlackMiniPlayerKey,
         defaultValue = false
@@ -154,7 +164,9 @@ fun ThemeScreen(
             pureBlack = pureBlack,
             onPureBlackChange = onPureBlackChange,
             selectedThemeColor = selectedThemeColor,
-            onSelectedThemeColorChange = handleColorSelection
+            onSelectedThemeColorChange = handleColorSelection,
+            darkModeLocked = darkModeLocked,
+            themeColorsLocked = themeColorsLocked,
         )
     } else {
         PortraitThemeLayout(
@@ -164,7 +176,9 @@ fun ThemeScreen(
             pureBlack = pureBlack,
             onPureBlackChange = onPureBlackChange,
             selectedThemeColor = selectedThemeColor,
-            onSelectedThemeColorChange = handleColorSelection
+            onSelectedThemeColorChange = handleColorSelection,
+            darkModeLocked = darkModeLocked,
+            themeColorsLocked = themeColorsLocked,
         )
     }
 
@@ -189,7 +203,9 @@ fun PortraitThemeLayout(
     pureBlack: Boolean,
     onPureBlackChange: (Boolean) -> Unit,
     selectedThemeColor: Color,
-    onSelectedThemeColorChange: (Color) -> Unit
+    onSelectedThemeColorChange: (Color) -> Unit,
+    darkModeLocked: Boolean = false,
+    themeColorsLocked: Boolean = false,
 ) {
     Column(
         modifier = Modifier
@@ -220,7 +236,9 @@ fun PortraitThemeLayout(
             pureBlack = pureBlack,
             onPureBlackChange = onPureBlackChange,
             selectedThemeColor = selectedThemeColor,
-            onSelectedThemeColorChange = onSelectedThemeColorChange
+            onSelectedThemeColorChange = onSelectedThemeColorChange,
+            darkModeLocked = darkModeLocked,
+            themeColorsLocked = themeColorsLocked,
         )
 
         Spacer(modifier = Modifier.height(120.dp))
@@ -235,7 +253,9 @@ fun LandscapeThemeLayout(
     pureBlack: Boolean,
     onPureBlackChange: (Boolean) -> Unit,
     selectedThemeColor: Color,
-    onSelectedThemeColorChange: (Color) -> Unit
+    onSelectedThemeColorChange: (Color) -> Unit,
+    darkModeLocked: Boolean = false,
+    themeColorsLocked: Boolean = false,
 ) {
     Row(
         modifier = Modifier
@@ -277,10 +297,10 @@ fun LandscapeThemeLayout(
                 pureBlack = pureBlack,
                 onPureBlackChange = onPureBlackChange,
                 selectedThemeColor = selectedThemeColor,
-                onSelectedThemeColorChange = onSelectedThemeColorChange
+                onSelectedThemeColorChange = onSelectedThemeColorChange,
+                darkModeLocked = darkModeLocked,
+                themeColorsLocked = themeColorsLocked,
             )
-
-            Spacer(modifier = Modifier.height(80.dp))
         }
     }
 }
@@ -292,7 +312,9 @@ fun ThemeControls(
     pureBlack: Boolean,
     onPureBlackChange: (Boolean) -> Unit,
     selectedThemeColor: Color,
-    onSelectedThemeColorChange: (Color) -> Unit
+    onSelectedThemeColorChange: (Color) -> Unit,
+    darkModeLocked: Boolean = false,
+    themeColorsLocked: Boolean = false,
 ) {
     Card(
         modifier = Modifier
@@ -329,7 +351,8 @@ fun ThemeControls(
                         onClick = {
                             onDarkModeChange(DarkMode.AUTO)
                         },
-                        showIcon = true
+                        showIcon = true,
+                        locked = darkModeLocked
                     )
                     
                     // Vertical divider to separate System from manual modes
@@ -350,7 +373,8 @@ fun ThemeControls(
                             onDarkModeChange(DarkMode.OFF)
                             onPureBlackChange(false)
                         },
-                        showIcon = false
+                        showIcon = false,
+                        locked = darkModeLocked
                     )
                     
                     ModeCircle(
@@ -362,7 +386,8 @@ fun ThemeControls(
                             onDarkModeChange(DarkMode.ON)
                             onPureBlackChange(false)
                         },
-                        showIcon = false
+                        showIcon = false,
+                        locked = darkModeLocked
                     )
                     
                     ModeCircle(
@@ -374,7 +399,16 @@ fun ThemeControls(
                             onDarkModeChange(DarkMode.ON)
                             onPureBlackChange(true)
                         },
-                        showIcon = false
+                        showIcon = false,
+                        locked = darkModeLocked
+                    )
+                }
+                
+                if (darkModeLocked) {
+                    Text(
+                        text = stringResource(R.string.layout_themes_force_dark_mode_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
                 }
             }
@@ -383,7 +417,7 @@ fun ThemeControls(
                 Text(
                     text = stringResource(R.string.color_palette),
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = if (themeColorsLocked) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) else MaterialTheme.colorScheme.onSurface
                 )
                 
                 LazyRow(
@@ -402,11 +436,21 @@ fun ThemeControls(
                             palette = palette,
                             isSelected = isSelected,
                             onClick = { 
-                                val colorToSave = if (isDynamicPalette) DefaultThemeColor else palette.seedColor
-                                onSelectedThemeColorChange(colorToSave) 
+                                if (!themeColorsLocked) {
+                                    val colorToSave = if (isDynamicPalette) DefaultThemeColor else palette.seedColor
+                                    onSelectedThemeColorChange(colorToSave) 
+                                }
                             }
                         )
                     }
+                }
+
+                if (themeColorsLocked) {
+                    Text(
+                        text = "Theme colors are locked by the active layout theme.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
                 }
             }
         }
@@ -420,16 +464,21 @@ fun ModeCircle(
     targetMode: DarkMode,
     targetPureBlack: Boolean,
     showIcon: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    locked: Boolean = false
 ) {
     val context = LocalContext.current
     val isSystemDark = isSystemInDarkTheme()
-    val isSelected = darkMode == targetMode && pureBlack == targetPureBlack
-    
-    val effectiveDark = when (targetMode) {
-        DarkMode.AUTO -> isSystemDark
-        DarkMode.ON -> true
-        DarkMode.OFF -> false
+    val effectiveDark = when {
+        locked -> true
+        targetMode == DarkMode.AUTO -> isSystemDark
+        targetMode == DarkMode.ON -> true
+        else -> false
+    }
+    val isSelected = if (locked) {
+        targetMode != DarkMode.OFF && !targetPureBlack
+    } else {
+        darkMode == targetMode && pureBlack == targetPureBlack
     }
     
     // Use actual system colors for AUTO mode on Android 12+
@@ -484,6 +533,7 @@ fun ModeCircle(
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
+                alpha = if (locked && !isSelected) 0.38f else 1f
             }
             .clip(CircleShape)
             .background(fillColor)
@@ -498,10 +548,16 @@ fun ModeCircle(
                     Modifier
                 }
             )
-            .clickable(
-                interactionSource = interactionSource,
-                indication = ripple(),
-                onClick = onClick
+            .then(
+                if (locked) {
+                    Modifier
+                } else {
+                    Modifier.clickable(
+                        interactionSource = interactionSource,
+                        indication = ripple(),
+                        onClick = onClick
+                    )
+                }
             )
             .semantics {
                 contentDescription = contentDesc

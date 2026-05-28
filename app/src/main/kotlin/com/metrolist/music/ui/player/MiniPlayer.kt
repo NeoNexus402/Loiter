@@ -119,6 +119,8 @@ import coil3.request.allowHardware
 import coil3.toBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.metrolist.music.ui.theme.LocalLayoutThemeConfig
+import com.metrolist.music.ui.theme.MiniPlayerLayout
 import com.metrolist.music.ui.theme.PlayerColorExtractor
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.menu.AddToPlaylistDialog
@@ -146,7 +148,20 @@ fun MiniPlayer(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
 ) {
-    val useNewMiniPlayerDesign by rememberPreference(UseNewMiniPlayerDesignKey, true)
+    val themeConfig = LocalLayoutThemeConfig.current
+    if (themeConfig.miniPlayerLayout == MiniPlayerLayout.OVERLAY) {
+        BlackholeMiniPlayer(
+            modifier = modifier,
+            onClick = onClick,
+            blackholeAccentColor = themeConfig.seedColor ?: Color(0xFF1DB954),
+        )
+        return
+    }
+
+    val useNewMiniPlayerDesignPref by rememberPreference(UseNewMiniPlayerDesignKey, true)
+    val useNewMiniPlayerDesign = remember(useNewMiniPlayerDesignPref, themeConfig) {
+        if (themeConfig.lockNewMiniPlayerDesign) false else useNewMiniPlayerDesignPref
+    }
 
     // Create stable progress state - doesn't cause recomposition on position changes
     val progressState = remember { ProgressState(positionState, durationState) }
@@ -399,7 +414,7 @@ private fun NewMiniPlayer(
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .blur(60.dp),
+                                    .blur(25.dp),
                             )
                             Box(
                                 Modifier
@@ -499,11 +514,13 @@ private fun NewMiniPlayer(
                 Spacer(modifier = Modifier.width(8.dp))
 
 // Favorite button - isolated composable
+                val accentColor = LocalLayoutThemeConfig.current.accentColor
                 mediaMetadata?.let { FavoriteButton(
                     songId = it.id,
                     errorColor = errorColor,
                     outlineColor = outlineColor,
                     onSurfaceColor = onSurfaceColor,
+                    accentColor = accentColor,
                 )
                 }
             }
@@ -1144,6 +1161,7 @@ private fun FavoriteButton(
     errorColor: Color,
     outlineColor: Color,
     onSurfaceColor: Color,
+    accentColor: Color? = null,
 ) {
     val database = LocalDatabase.current
     val playerConnection = LocalPlayerConnection.current ?: return
@@ -1152,6 +1170,7 @@ private fun FavoriteButton(
     val isEpisode = librarySong?.song?.isEpisode == true
     val isLiked = if (isEpisode) librarySong?.song?.inLibrary != null else librarySong?.song?.liked == true
 
+    val likedColor = accentColor ?: errorColor
     Box(
         contentAlignment = Alignment.Center,
         modifier =
@@ -1160,17 +1179,17 @@ private fun FavoriteButton(
                 .clip(CircleShape)
                 .border(
                     width = 1.dp,
-                    color = if (isLiked) errorColor.copy(alpha = 0.5f) else outlineColor.copy(alpha = 0.3f),
+                    color = if (isLiked) likedColor.copy(alpha = 0.5f) else outlineColor.copy(alpha = 0.3f),
                     shape = CircleShape,
                 ).background(
-                    color = if (isLiked) errorColor.copy(alpha = 0.1f) else Color.Transparent,
+                    color = if (isLiked) likedColor.copy(alpha = 0.1f) else Color.Transparent,
                     shape = CircleShape,
                 ).clickable { playerConnection.service.toggleLike() },
     ) {
         Icon(
             painter = painterResource(if (isLiked) R.drawable.favorite else R.drawable.favorite_border),
             contentDescription = null,
-            tint = if (isLiked) errorColor else onSurfaceColor.copy(alpha = 0.7f),
+            tint = if (isLiked) likedColor else onSurfaceColor.copy(alpha = 0.7f),
             modifier = Modifier.size(20.dp),
         )
     }

@@ -5,7 +5,6 @@
 
 package com.metrolist.music.ui.player
 
-import androidx.activity.compose.BackHandler
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -54,6 +53,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -174,6 +174,9 @@ import com.metrolist.music.ui.component.rememberBottomSheetState
 import com.metrolist.music.ui.menu.PlayerMenu
 import com.metrolist.music.ui.screens.settings.DarkMode
 import com.metrolist.music.ui.theme.PlayerColorExtractor
+import com.metrolist.music.ui.theme.LayoutTheme
+import com.metrolist.music.ui.theme.LocalLayoutThemeConfig
+import com.metrolist.music.ui.theme.PlayerLayout
 import com.metrolist.music.ui.theme.PlayerSliderColors
 import com.metrolist.music.ui.utils.ShowMediaInfo
 import com.metrolist.music.ui.utils.ShowOffsetDialog
@@ -214,12 +217,16 @@ fun BottomSheetPlayer(
     val copiedArtistStr = stringResource(R.string.copied_artist)
     val bottomSheetPageState = LocalBottomSheetPageState.current
     val playerConnection = LocalPlayerConnection.current ?: return
+    val themeConfig = LocalLayoutThemeConfig.current
 
-    val (useNewPlayerDesign, onUseNewPlayerDesignChange) =
+    val (useNewPlayerDesignPref, onUseNewPlayerDesignChange) =
         rememberPreference(
             UseNewPlayerDesignKey,
             defaultValue = true,
         )
+    val useNewPlayerDesign = remember(useNewPlayerDesignPref, themeConfig) {
+        if (themeConfig.lockNewPlayerDesign) false else useNewPlayerDesignPref
+    }
     val (hidePlayerThumbnail, onHidePlayerThumbnailChange) = rememberPreference(HidePlayerThumbnailKey, false)
     val (hideStatusBarOnFullscreen) = rememberPreference(HideStatusBarOnFullscreenKey, false)
     val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
@@ -234,7 +241,7 @@ fun BottomSheetPlayer(
 
     val playerBackground by rememberEnumPreference(
         key = PlayerBackgroundStyleKey,
-        defaultValue = PlayerBackgroundStyle.DEFAULT,
+        defaultValue = PlayerBackgroundStyle.valueOf(themeConfig.defaultPlayerBackground),
     )
     val playerButtonsStyle by rememberEnumPreference(
         key = PlayerButtonsStyleKey,
@@ -299,10 +306,6 @@ fun BottomSheetPlayer(
         }
     }
 
-    BackHandler(enabled = state.isExpanded) {
-        state.collapseSoft()
-    }
-
     val onBackgroundColor =
         when (playerBackground) {
             PlayerBackgroundStyle.DEFAULT -> MaterialTheme.colorScheme.secondary
@@ -350,7 +353,7 @@ fun BottomSheetPlayer(
 
     LaunchedEffect(state.isExpanded) {
         if (state.isExpanded) {
-            delay(100)
+            delay(300)
             try {
                 focusRequester.requestFocus()
             } catch (e: Exception) {
@@ -660,7 +663,7 @@ fun BottomSheetPlayer(
                                 sleepTimerValue.roundToInt(),
                                 sleepTimerValue.roundToInt(),
                             ),
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.bodyMedium,
                     )
 
                     Slider(
@@ -738,7 +741,7 @@ fun BottomSheetPlayer(
     LaunchedEffect(isPlaying, isCasting) {
         if (!isCasting && isPlaying) {
             while (isActive) {
-                delay(100) // Update more frequently for smoother progress bar
+                delay(250) // Update position at ~4 fps for smooth progress bar without excessive recomposition
                 if (sliderPosition == null) { // Only update if user isn't dragging
                     position = playerConnection.player.currentPosition
                     duration = playerConnection.player.duration
@@ -797,18 +800,12 @@ fun BottomSheetPlayer(
         )
 
     val bottomSheetBackgroundColor =
-        when (playerBackground) {
-            PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT -> {
+        when {
+            themeConfig.forceBlackBackground -> Color.Black
+            playerBackground == PlayerBackgroundStyle.BLUR || playerBackground == PlayerBackgroundStyle.GRADIENT ->
                 MaterialTheme.colorScheme.surfaceContainer
-            }
-
-            else -> {
-                if (useBlackBackground) {
-                    Color.Black
-                } else {
-                    MaterialTheme.colorScheme.surfaceContainer
-                }
-            }
+            useBlackBackground -> Color.Black
+            else -> MaterialTheme.colorScheme.surfaceContainer
         }
 
     val backgroundAlpha = state.progress.coerceIn(0f, 1f)
@@ -847,7 +844,7 @@ fun BottomSheetPlayer(
                                         modifier =
                                             Modifier
                                                 .fillMaxSize()
-                                                .blur(if (useDarkTheme) 150.dp else 100.dp),
+                                                .blur(25.dp),
                                     )
                                     Box(
                                         modifier =
@@ -920,10 +917,12 @@ fun BottomSheetPlayer(
     ) {
         val controlsContent: @Composable ColumnScope.(MediaMetadata) -> Unit = { mediaMetadata ->
             val playPauseRoundness by animateDpAsState(
-                targetValue = if (isPlaying) 24.dp else 36.dp,
+                targetValue = if (isPlaying) themeConfig.playerCornerRadius.coerceAtLeast(12.dp) else themeConfig.playerCornerRadius.coerceAtLeast(24.dp),
                 animationSpec = tween(durationMillis = 90, easing = LinearEasing),
                 label = "playPauseRoundness",
             )
+            val themePlayPauseSize = themeConfig.playPauseButtonSize
+            val themeControlSize = themeConfig.controlButtonSize
 
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -984,8 +983,7 @@ fun BottomSheetPlayer(
                     ) { title ->
                         Text(
                             text = title,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
+                            style = themeConfig.songTitleStyle,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             color = TextBackgroundColor,
@@ -1028,7 +1026,7 @@ fun BottomSheetPlayer(
                                     mediaMetadata.artists.forEachIndexed { index, artist ->
                                         val tag = "artist_${artist.id.orEmpty()}"
                                         pushStringAnnotation(tag = tag, annotation = artist.id.orEmpty())
-                                        withStyle(SpanStyle(color = TextBackgroundColor, fontSize = 16.sp)) {
+                                        withStyle(SpanStyle(color = TextBackgroundColor, fontSize = themeConfig.artistStyle.fontSize)) {
                                             append(artist.name)
                                         }
                                         pop()
@@ -1218,13 +1216,14 @@ fun BottomSheetPlayer(
                                 // For episodes, show saved state (inLibrary); for songs, show liked state
                                 val isEpisode = currentSong?.song?.isEpisode == true
                                 val isFavorite = if (isEpisode) currentSong?.song?.inLibrary != null else currentSong?.song?.liked == true
+                                val favAccentColor = if (isFavorite) (themeConfig.accentColor ?: themeConfig.seedColor) else null
                                 FilledIconButton(
                                     onClick = playerConnection::toggleLike,
                                     shape = favShape,
                                     colors =
                                         IconButtonDefaults.filledIconButtonColors(
                                             containerColor = textButtonColor,
-                                            contentColor = iconButtonColor,
+                                            contentColor = favAccentColor ?: iconButtonColor,
                                         ),
                                     modifier = Modifier.size(42.dp),
                                 ) {
@@ -1377,7 +1376,7 @@ fun BottomSheetPlayer(
                             }
                         },
                         enabled = !isListenTogetherGuest,
-                        colors = PlayerSliderColors.getSliderColors(textButtonColor, playerBackground, useDarkTheme),
+                        colors = PlayerSliderColors.getSliderColors(textButtonColor, playerBackground, useDarkTheme, accentColor = themeConfig.accentColor),
                         modifier = Modifier.padding(horizontal = PlayerHorizontalPadding),
                     )
                 }
@@ -1403,7 +1402,7 @@ fun BottomSheetPlayer(
                                 sliderPosition = null
                             },
                             modifier = Modifier.padding(horizontal = PlayerHorizontalPadding),
-                            colors = PlayerSliderColors.getSliderColors(textButtonColor, playerBackground, useDarkTheme),
+                            colors = PlayerSliderColors.getSliderColors(textButtonColor, playerBackground, useDarkTheme, accentColor = themeConfig.accentColor),
                             isPlaying = effectiveIsPlaying,
                         )
                     } else {
@@ -1425,7 +1424,7 @@ fun BottomSheetPlayer(
                                 }
                                 sliderPosition = null
                             },
-                            colors = PlayerSliderColors.getSliderColors(textButtonColor, playerBackground, useDarkTheme),
+                            colors = PlayerSliderColors.getSliderColors(textButtonColor, playerBackground, useDarkTheme, accentColor = themeConfig.accentColor),
                             modifier = Modifier.padding(horizontal = PlayerHorizontalPadding),
                             isPlaying = effectiveIsPlaying,
                         )
@@ -1460,7 +1459,7 @@ fun BottomSheetPlayer(
                         track = { sliderState ->
                             PlayerSliderTrack(
                                 sliderState = sliderState,
-                                colors = PlayerSliderColors.getSliderColors(textButtonColor, playerBackground, useDarkTheme),
+                                colors = PlayerSliderColors.getSliderColors(textButtonColor, playerBackground, useDarkTheme, accentColor = themeConfig.accentColor),
                             )
                         },
                         modifier = Modifier.padding(horizontal = PlayerHorizontalPadding),
@@ -1704,7 +1703,7 @@ fun BottomSheetPlayer(
                                     color = TextBackgroundColor,
                                     modifier =
                                         Modifier
-                                            .size(32.dp)
+                                            .size(themeControlSize)
                                             .padding(4.dp)
                                             .align(Alignment.Center)
                                             .alpha(if (isListenTogetherGuest) 0.5f else 1f),
@@ -1722,7 +1721,7 @@ fun BottomSheetPlayer(
                                     color = TextBackgroundColor,
                                     modifier =
                                         Modifier
-                                            .size(32.dp)
+                                            .size(themeControlSize)
                                             .align(Alignment.Center)
                                             .alpha(if (isListenTogetherGuest) 0.5f else 1f),
                                     onClick = playerConnection::seekToPrevious,
@@ -1734,7 +1733,7 @@ fun BottomSheetPlayer(
                             Box(
                                 modifier =
                                     Modifier
-                                        .size(72.dp)
+                                        .size(themePlayPauseSize)
                                         .clip(RoundedCornerShape(playPauseRoundness))
                                         .background(textButtonColor)
                                         .clickable {
@@ -1803,7 +1802,7 @@ fun BottomSheetPlayer(
                                 val isFavorite = if (isEpisode) currentSong?.song?.inLibrary != null else currentSong?.song?.liked == true
                                 ResizableIconButton(
                                     icon = if (isFavorite) R.drawable.favorite else R.drawable.favorite_border,
-                                    color = if (isFavorite) MaterialTheme.colorScheme.error else TextBackgroundColor,
+                                    color = if (isFavorite) (themeConfig.accentColor ?: MaterialTheme.colorScheme.error) else TextBackgroundColor,
                                     modifier =
                                         Modifier
                                             .size(32.dp)
@@ -1838,36 +1837,37 @@ fun BottomSheetPlayer(
                             ).padding(bottom = 24.dp)
                             .fillMaxSize(),
                 ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier =
-                            Modifier
-                                .weight(1f)
-                                .nestedScroll(state.preUpPostDownNestedScrollConnection),
-                    ) {
-                        // Remember lambdas to prevent unnecessary recomposition
-                        val currentSliderPosition by rememberUpdatedState(sliderPosition)
-                        val sliderPositionProvider = remember { { currentSliderPosition } }
-                        val isExpandedProvider = remember(state) { { state.isExpanded } }
-                        AnimatedContent(
-                            targetState = showInlineLyrics,
-                            label = "Lyrics",
-                            transitionSpec = { fadeIn() togetherWith fadeOut() },
-                        ) { showLyrics ->
-                            if (showLyrics) {
-                                InlineLyricsView(
-                                    mediaMetadata = mediaMetadata,
-                                    showLyrics = showLyrics,
-                                    positionProvider = { effectivePosition },
-                                )
-                            } else {
-                                Thumbnail(
-                                    sliderPositionProvider = sliderPositionProvider,
-                                    modifier = Modifier.animateContentSize(),
-                                    isPlayerExpanded = isExpandedProvider,
-                                    isLandscape = true,
-                                    isListenTogetherGuest = isListenTogetherGuest,
-                                )
+                    if (themeConfig.playerLayout != PlayerLayout.MODERN) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .nestedScroll(state.preUpPostDownNestedScrollConnection),
+                        ) {
+                            val currentSliderPosition by rememberUpdatedState(sliderPosition)
+                            val sliderPositionProvider = remember { { currentSliderPosition } }
+                            val isExpandedProvider = remember(state) { { state.isExpanded } }
+                            AnimatedContent(
+                                targetState = showInlineLyrics,
+                                label = "Lyrics",
+                                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                            ) { showLyrics ->
+                                if (showLyrics) {
+                                    InlineLyricsView(
+                                        mediaMetadata = mediaMetadata,
+                                        showLyrics = showLyrics,
+                                        positionProvider = { effectivePosition },
+                                    )
+                                } else {
+                                    Thumbnail(
+                                        sliderPositionProvider = sliderPositionProvider,
+                                        modifier = Modifier.animateContentSize(),
+                                        isPlayerExpanded = isExpandedProvider,
+                                        isLandscape = true,
+                                        isListenTogetherGuest = isListenTogetherGuest,
+                                    )
+                                }
                             }
                         }
                     }
@@ -1876,14 +1876,45 @@ fun BottomSheetPlayer(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier =
                             Modifier
-                                .weight(if (showInlineLyrics) 0.65f else 1f, false)
+                                .weight(
+                                    if (themeConfig.playerLayout == PlayerLayout.MODERN) {
+                                        1f
+                                    } else {
+                                        if (showInlineLyrics) 0.65f else 1f
+                                    },
+                                    false,
+                                )
                                 .animateContentSize()
                                 .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top)),
                     ) {
-                        Spacer(Modifier.weight(1f))
+                        if (themeConfig.playerLayout == PlayerLayout.MODERN) {
+                            Box(modifier = Modifier.weight(1f)) {
+                                BlackholePlayerContent(
+                                    playerConnection = playerConnection,
+                                    navController = navController,
+                                    showInlineLyrics = showInlineLyrics,
+                                    playerBottomSheetState = state,
+                                    blackholeAccentColor = themeConfig.seedColor ?: Color(0xFF1DB954),
+                                )
+                            }
+                        } else {
+                            Spacer(Modifier.weight(1f))
 
-                        mediaMetadata?.let {
-                            controlsContent(it)
+                            mediaMetadata?.let { controlsContent(it) }
+
+                            Spacer(Modifier.weight(1f))
+                        }
+
+                        val bottomPadding by animateDpAsState(
+                            targetValue = if (isFullScreen) 0.dp else queueSheetState.collapsedBound,
+                            label = "bottomPadding",
+                        )
+                        if (!isFullScreen) {
+                            Spacer(
+                                modifier = Modifier.windowInsetsBottomHeight(
+                                    WindowInsets.systemBars,
+                                ),
+                            )
                         }
 
                         Spacer(Modifier.weight(1f))
@@ -1902,40 +1933,58 @@ fun BottomSheetPlayer(
                         Modifier
                             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
                             .padding(bottom = bottomPadding)
+                            .then(
+                                if (themeConfig.forceBlackBackground) {
+                                    Modifier.windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
+                                } else Modifier
+                            )
                             .animateContentSize(),
                 ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        // Remember lambdas to prevent unnecessary recomposition
-                        val currentSliderPosition by rememberUpdatedState(sliderPosition)
-                        val sliderPositionProvider = remember { { currentSliderPosition } }
-                        val isExpandedProvider = remember(state) { { state.isExpanded } }
-                        AnimatedContent(
-                            targetState = showInlineLyrics,
-                            label = "Lyrics",
-                            transitionSpec = { fadeIn() togetherWith fadeOut() },
-                        ) { showLyrics ->
-                            if (showLyrics) {
-                                InlineLyricsView(
-                                    mediaMetadata = mediaMetadata,
-                                    showLyrics = showLyrics,
-                                    positionProvider = { effectivePosition },
-                                )
-                            } else {
-                                Thumbnail(
-                                    sliderPositionProvider = sliderPositionProvider,
-                                    modifier = Modifier.nestedScroll(state.preUpPostDownNestedScrollConnection),
-                                    isPlayerExpanded = isExpandedProvider,
-                                    isListenTogetherGuest = isListenTogetherGuest,
-                                )
+                    if (themeConfig.playerLayout != PlayerLayout.MODERN) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            val currentSliderPosition by rememberUpdatedState(sliderPosition)
+                            val sliderPositionProvider = remember { { currentSliderPosition } }
+                            val isExpandedProvider = remember(state) { { state.isExpanded } }
+                            AnimatedContent(
+                                targetState = showInlineLyrics,
+                                label = "Lyrics",
+                                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                            ) { showLyrics ->
+                                if (showLyrics) {
+                                    InlineLyricsView(
+                                        mediaMetadata = mediaMetadata,
+                                        showLyrics = showLyrics,
+                                        positionProvider = { effectivePosition },
+                                    )
+                                } else {
+                                    Thumbnail(
+                                        sliderPositionProvider = sliderPositionProvider,
+                                        modifier = Modifier.nestedScroll(state.preUpPostDownNestedScrollConnection),
+                                        isPlayerExpanded = isExpandedProvider,
+                                        isListenTogetherGuest = isListenTogetherGuest,
+                                    )
+                                }
                             }
                         }
                     }
 
                     mediaMetadata?.let {
-                        controlsContent(it)
+                        if (themeConfig.playerLayout == PlayerLayout.MODERN) {
+                            Box(modifier = Modifier.weight(1f)) {
+                                BlackholePlayerContent(
+                                    playerConnection = playerConnection,
+                                    navController = navController,
+                                    showInlineLyrics = showInlineLyrics,
+                                    playerBottomSheetState = state,
+                                    blackholeAccentColor = themeConfig.seedColor ?: Color(0xFF1DB954),
+                                )
+                            }
+                        } else {
+                            controlsContent(it)
+                        }
                     }
 
                     Spacer(Modifier.height(30.dp))
@@ -1953,7 +2002,7 @@ fun BottomSheetPlayer(
                 playerBottomSheetState = state,
                 navController = navController,
                 background =
-                    if (useBlackBackground) {
+                    if (themeConfig.forceBlackBackground || useBlackBackground) {
                         Color.Black
                     } else {
                         MaterialTheme.colorScheme.surfaceContainer
@@ -2077,7 +2126,7 @@ fun InlineLyricsView(
         modifier =
             Modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(12.dp)),
+                .padding(vertical = 4.dp),
         contentAlignment = Alignment.Center,
     ) {
         when {
@@ -2088,8 +2137,8 @@ fun InlineLyricsView(
             lyrics == LyricsEntity.LYRICS_NOT_FOUND -> {
                 Text(
                     text = stringResource(R.string.lyrics_not_found),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color(0xFF888888),
                     textAlign = TextAlign.Center,
                 )
             }
@@ -2098,15 +2147,16 @@ fun InlineLyricsView(
                 val lyricsContent: @Composable () -> Unit = {
                     Lyrics(
                         sliderPositionProvider = positionProvider,
-                        modifier = Modifier.padding(horizontal = 24.dp),
+                        modifier = Modifier.padding(horizontal = 16.dp),
                         showLyrics = showLyrics,
                     )
                 }
                 ProvideTextStyle(
                     value =
-                        MaterialTheme.typography.bodyMedium.copy(
-                            fontSize = 14.sp,
+                        MaterialTheme.typography.bodyLarge.copy(
+                            fontSize = 16.sp,
                             textAlign = TextAlign.Center,
+                            lineHeight = 28.sp,
                         ),
                 ) {
                     lyricsContent()

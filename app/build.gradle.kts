@@ -94,8 +94,8 @@ android {
         applicationId = applicationIdOverride ?: baseApplicationId
         minSdk = 26
         targetSdk = 36
-        versionCode = 147
-        versionName = "13.4.3"
+        versionCode = 1001
+        versionName = "1.0.1"
         resValue("string", "app_name", appNameOverride ?: "Loiter")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

@@ -136,6 +136,8 @@ import com.metrolist.music.ui.component.AlbumGridItem
 import com.metrolist.music.ui.component.ArtistGridItem
 import com.metrolist.music.ui.component.ChipsRow
 import com.metrolist.music.ui.component.HideOnScrollFAB
+import com.metrolist.music.ui.theme.LayoutTheme
+import com.metrolist.music.ui.theme.LocalLayoutTheme
 import com.metrolist.music.ui.component.LocalBottomSheetPageState
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.NavigationTitle
@@ -666,6 +668,7 @@ fun HomeScreen(
     val isMoodAndGenresLoading = isLoading && explorePage?.moodAndGenres == null
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val isRandomizing by viewModel.isRandomizing.collectAsStateWithLifecycle()
+    val isBlackholeLayout = LocalLayoutTheme.current == LayoutTheme.BLACKHOLE
     val pullRefreshState = rememberPullToRefreshState()
 
     val quickPicksLazyGridState = rememberLazyGridState()
@@ -2480,7 +2483,7 @@ fun HomeScreen(
             }
 
             HideOnScrollFAB(
-                visible = allLocalItems.isNotEmpty() || allYtItems.isNotEmpty(),
+                visible = (allLocalItems.isNotEmpty() || allYtItems.isNotEmpty()) && !isBlackholeLayout,
                 lazyListState = lazylistState,
                 icon = R.drawable.shuffle,
                 onClick = {
@@ -2513,49 +2516,51 @@ fun HomeScreen(
                                     is Playlist -> {}
                                 }
                             } else {
-                                when (val luckyItem = allYtItems.random()) {
-                                    is SongItem -> {
-                                        playerConnection.playQueue(YouTubeQueue.radio(luckyItem.toMediaMetadata()))
-                                    }
-
-                                    is AlbumItem -> {
-                                        playerConnection.playQueue(YouTubeAlbumRadio(luckyItem.playlistId))
-                                    }
-
-                                    is ArtistItem -> {
-                                        luckyItem.radioEndpoint?.let {
-                                            playerConnection.playQueue(YouTubeQueue(it))
+                                allYtItems.random().let { luckyItem ->
+                                    when (luckyItem) {
+                                        is SongItem -> {
+                                            playerConnection.playQueue(YouTubeQueue.radio(luckyItem.toMediaMetadata()))
                                         }
-                                    }
 
-                                    is PlaylistItem -> {
-                                        luckyItem.playEndpoint?.let {
-                                            playerConnection.playQueue(YouTubeQueue(it))
+                                        is AlbumItem -> {
+                                            playerConnection.playQueue(YouTubeAlbumRadio(luckyItem.playlistId))
                                         }
-                                    }
 
-                                    is PodcastItem -> {
-                                        luckyItem.playEndpoint?.let {
-                                            playerConnection.playQueue(YouTubeQueue(it))
+                                        is ArtistItem -> {
+                                            luckyItem.radioEndpoint?.let {
+                                                playerConnection.playQueue(YouTubeQueue(it))
+                                            }
                                         }
-                                    }
 
-                                    is EpisodeItem -> {
-                                        playerConnection.playQueue(
-                                            ListQueue(
-                                                title = luckyItem.title,
-                                                items = listOf(luckyItem.toMediaMetadata().toMediaItem()),
-                                            ),
-                                        )
+                                        is PlaylistItem -> {
+                                            luckyItem.playEndpoint?.let {
+                                                playerConnection.playQueue(YouTubeQueue(it))
+                                            }
+                                        }
+
+                                        is PodcastItem -> {
+                                            luckyItem.playEndpoint?.let {
+                                                playerConnection.playQueue(YouTubeQueue(it))
+                                            }
+                                        }
+
+                                        is EpisodeItem -> {
+                                            playerConnection.playQueue(
+                                                ListQueue(
+                                                    title = luckyItem.title,
+                                                    items = listOf(luckyItem.toMediaMetadata().toMediaItem()),
+                                                ),
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 },
-                onRecognitionClick = {
-                    navController.navigate("recognition")
-                },
+                onRecognitionClick = if (!isBlackholeLayout) {
+                    { navController.navigate("recognition") }
+                } else null,
             )
         }
     }

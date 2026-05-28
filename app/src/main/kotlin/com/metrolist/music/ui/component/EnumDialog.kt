@@ -27,7 +27,7 @@ fun <T> EnumDialog(
     current: T,
     values: List<T>,
     valueText: @Composable (T) -> String,
-    valueDescription: (@Composable (T) -> String)? = null,
+    valueDescription: (@Composable (T) -> String?)? = null,
 ) {
     ListDialog(
         onDismiss = onDismiss,
@@ -55,11 +55,14 @@ fun <T> EnumDialog(
                         text = valueText(value),
                     )
                     if (valueDescription != null) {
-                        Text(
-                            text = valueDescription(value),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        val desc = valueDescription(value)
+                        if (desc != null) {
+                            Text(
+                                text = desc,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
             }

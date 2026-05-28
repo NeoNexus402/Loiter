@@ -32,8 +32,10 @@ object PlayerSliderColors {
     fun getSliderColors(
         activeColor: Color,
         playerBackground: PlayerBackgroundStyle,
-        useDarkTheme: Boolean
+        useDarkTheme: Boolean,
+        accentColor: Color? = null,
     ): SliderColors {
+        val effectiveActiveColor = accentColor ?: activeColor
         val inactiveTrackColor = when (playerBackground) {
             PlayerBackgroundStyle.DEFAULT -> {
                 if (useDarkTheme) {
@@ -48,13 +50,13 @@ object PlayerSliderColors {
         }
         
         return SliderDefaults.colors(
-            activeTrackColor = activeColor,
-            activeTickColor = activeColor,
-            thumbColor = activeColor,
+            activeTrackColor = effectiveActiveColor,
+            activeTickColor = effectiveActiveColor,
+            thumbColor = effectiveActiveColor,
             inactiveTrackColor = inactiveTrackColor,
-            disabledActiveTrackColor = activeColor,
+            disabledActiveTrackColor = effectiveActiveColor,
             disabledInactiveTrackColor = inactiveTrackColor,
-            disabledThumbColor = activeColor
+            disabledThumbColor = effectiveActiveColor
         )
     }
 }

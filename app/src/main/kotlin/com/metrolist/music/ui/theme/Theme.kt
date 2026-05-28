@@ -10,6 +10,7 @@ import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
@@ -28,14 +29,99 @@ import com.materialkolor.score.Score
 
 val DefaultThemeColor = Color(0xFFED5564)
 
+/**
+ * Creates an explicitly neutral dark color scheme with no chromatic content.
+ * Used for non-Loiter layout themes to provide a grayish-black/dark background
+ * while [LayoutThemeConfig.accentColor] provides vibrancy on specific UI elements.
+ */
+fun neutralDarkColorScheme(): ColorScheme {
+    return darkColorScheme(
+        primary = Color(0xFFB0B0B0),
+        onPrimary = Color(0xFF212121),
+        primaryContainer = Color(0xFF2E2E2E),
+        onPrimaryContainer = Color(0xFFD0D0D0),
+        inversePrimary = Color(0xFF3A3A3A),
+        secondary = Color(0xFF9E9E9E),
+        onSecondary = Color(0xFF212121),
+        secondaryContainer = Color(0xFF2E2E2E),
+        onSecondaryContainer = Color(0xFFD0D0D0),
+        tertiary = Color(0xFF9E9E9E),
+        onTertiary = Color(0xFF212121),
+        tertiaryContainer = Color(0xFF2E2E2E),
+        onTertiaryContainer = Color(0xFFD0D0D0),
+        error = Color(0xFFCF6679),
+        onError = Color(0xFF212121),
+        errorContainer = Color(0xFF3A2A2A),
+        onErrorContainer = Color(0xFFF0D0D0),
+        background = Color(0xFF121212),
+        onBackground = Color(0xFFE0E0E0),
+        surface = Color(0xFF1A1A1A),
+        onSurface = Color(0xFFE0E0E0),
+        surfaceVariant = Color(0xFF2A2A2A),
+        onSurfaceVariant = Color(0xFFB0B0B0),
+        outline = Color(0xFF3A3A3A),
+        outlineVariant = Color(0xFF2A2A2A),
+        inverseSurface = Color(0xFFE0E0E0),
+        inverseOnSurface = Color(0xFF212121),
+        surfaceContainerLowest = Color(0xFF121212),
+        surfaceContainerLow = Color(0xFF161616),
+        surfaceContainer = Color(0xFF1E1E1E),
+        surfaceContainerHigh = Color(0xFF222222),
+        surfaceContainerHighest = Color(0xFF282828),
+        surfaceTint = Color(0xFFB0B0B0),
+        scrim = Color.Black,
+    )
+}
+
 @Composable
 fun MetrolistTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     pureBlack: Boolean = false,
     themeColor: Color = DefaultThemeColor,
+    forceBlackBackground: Boolean = false,
+    useNeutralScheme: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
+
+    // For non-Loiter themes, use an explicitly neutral color scheme
+    if (useNeutralScheme && darkTheme) {
+        val colorScheme = remember(pureBlack, forceBlackBackground) {
+            if (pureBlack) {
+                neutralDarkColorScheme().let { scheme ->
+                    scheme.copy(
+                        surface = Color.Black,
+                        background = Color.Black,
+                    )
+                }
+            } else if (forceBlackBackground) {
+                neutralDarkColorScheme().let { scheme ->
+                    scheme.copy(
+                        surface = Color.Black,
+                        background = Color.Black,
+                        surfaceVariant = Color(0xFF1A1A1A),
+                        surfaceContainer = Color(0xFF1A1A1A),
+                        surfaceContainerHigh = Color(0xFF1A1A1A),
+                        surfaceContainerHighest = Color(0xFF1A1A1A),
+                        surfaceContainerLow = Color(0xFF1A1A1A),
+                        surfaceContainerLowest = Color.Black,
+                        outline = Color(0xFF2A2A2A),
+                        outlineVariant = Color(0xFF2A2A2A),
+                    )
+                }
+            } else {
+                neutralDarkColorScheme()
+            }
+        }
+
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = AppTypography,
+            content = content,
+        )
+        return
+    }
+
     // Determine if system dynamic colors should be used (Android S+ and default theme color)
     val useSystemDynamicColor = (themeColor == DefaultThemeColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
 
@@ -54,9 +140,11 @@ fun MetrolistTheme(
     }
 
     // Apply pureBlack modification if needed, similar to original logic
-    val colorScheme = remember(baseColorScheme, pureBlack, darkTheme) {
+    val colorScheme = remember(baseColorScheme, pureBlack, darkTheme, forceBlackBackground) {
         if (darkTheme && pureBlack) {
             baseColorScheme.pureBlack(true)
+        } else if (darkTheme && forceBlackBackground) {
+            baseColorScheme.blackholeSurface()
         } else {
             baseColorScheme
         }
@@ -101,6 +189,19 @@ fun ColorScheme.pureBlack(apply: Boolean) =
         surface = Color.Black,
         background = Color.Black
     ) else this
+
+fun ColorScheme.blackholeSurface(): ColorScheme = copy(
+    surface = Color.Black,
+    background = Color.Black,
+    surfaceVariant = Color(0xFF1A1A1A),
+    surfaceContainer = Color(0xFF1A1A1A),
+    surfaceContainerHigh = Color(0xFF1A1A1A),
+    surfaceContainerHighest = Color(0xFF1A1A1A),
+    surfaceContainerLow = Color(0xFF1A1A1A),
+    surfaceContainerLowest = Color.Black,
+    outline = Color(0xFF2A2A2A),
+    outlineVariant = Color(0xFF2A2A2A),
+)
 
 val ColorSaver = object : Saver<Color, Int> {
     override fun restore(value: Int): Color = Color(value)

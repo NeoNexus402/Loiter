@@ -22,6 +22,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -102,6 +103,7 @@ private fun Material3MenuItemRow(
     }
 }
 
+@Stable
 data class Material3MenuItemData(
     val icon: (@Composable () -> Unit)? = null,
     val title: @Composable () -> Unit,

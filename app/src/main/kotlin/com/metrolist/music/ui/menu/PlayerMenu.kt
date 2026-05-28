@@ -97,6 +97,7 @@ import com.metrolist.music.ui.component.BottomSheetState
 import com.metrolist.music.ui.component.ListDialog
 import com.metrolist.music.ui.component.Material3MenuGroup
 import com.metrolist.music.ui.component.Material3MenuItemData
+import com.metrolist.music.ui.theme.LocalLayoutThemeConfig
 import com.metrolist.music.ui.component.NewAction
 import com.metrolist.music.ui.component.NewActionGrid
 import com.metrolist.music.ui.component.VolumeSlider
@@ -264,17 +265,18 @@ fun PlayerMenu(
                             .fillMaxWidth()
                             .padding(bottom = 16.dp),
                 ) {
+                    val menuAccentColor = LocalLayoutThemeConfig.current.effectiveAccentColor ?: MaterialTheme.colorScheme.primary
                     Icon(
                         painter = painterResource(R.drawable.cast),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = menuAccentColor,
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         text = stringResource(R.string.casting_to, castDeviceName ?: ""),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = menuAccentColor,
                     )
                 }
             }
@@ -295,9 +297,14 @@ fun PlayerMenu(
                         painter = painterResource(R.drawable.equalizer),
                         contentDescription = null,
                         modifier = Modifier.size(18.dp),
+                        tint = LocalLayoutThemeConfig.current.effectiveAccentColor ?: MaterialTheme.colorScheme.primary,
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("EQ", style = MaterialTheme.typography.labelMedium)
+                    Text(
+                        text = "EQ",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = LocalLayoutThemeConfig.current.effectiveAccentColor ?: MaterialTheme.colorScheme.primary,
+                    )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 VolumeSlider(
@@ -310,7 +317,7 @@ fun PlayerMenu(
                         }
                     },
                     modifier = Modifier.weight(1f),
-                    accentColor = MaterialTheme.colorScheme.primary,
+                    accentColor = LocalLayoutThemeConfig.current.effectiveAccentColor ?: MaterialTheme.colorScheme.primary,
                 )
             }
         }
@@ -798,7 +805,10 @@ fun TempoPitchDialog(onDismiss: () -> Unit) {
         properties = DialogProperties(usePlatformDefaultWidth = false),
         onDismissRequest = onDismiss,
         title = {
-            Text(stringResource(R.string.tempo_and_pitch))
+            Text(
+                text = stringResource(R.string.tempo_and_pitch),
+                color = LocalLayoutThemeConfig.current.effectiveAccentColor ?: MaterialTheme.colorScheme.primary,
+            )
         },
         dismissButton = {
             TextButton(
@@ -864,7 +874,10 @@ fun SpeedDialog(onDismiss: () -> Unit) {
         properties = DialogProperties(usePlatformDefaultWidth = false),
         onDismissRequest = onDismiss,
         title = {
-            Text(stringResource(R.string.speed))
+            Text(
+                text = stringResource(R.string.speed),
+                color = LocalLayoutThemeConfig.current.effectiveAccentColor ?: MaterialTheme.colorScheme.primary,
+            )
         },
         dismissButton = {
             TextButton(
@@ -909,6 +922,7 @@ fun <T> ValueAdjuster(
     valueText: (T) -> String,
     modifier: Modifier = Modifier,
 ) {
+    val accentColor = LocalLayoutThemeConfig.current.effectiveAccentColor ?: MaterialTheme.colorScheme.primary
     Row(
         horizontalArrangement = Arrangement.spacedBy(24.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -918,6 +932,7 @@ fun <T> ValueAdjuster(
             painter = painterResource(icon),
             contentDescription = null,
             modifier = Modifier.size(28.dp),
+            tint = accentColor,
         )
 
         IconButton(
@@ -929,6 +944,7 @@ fun <T> ValueAdjuster(
             Icon(
                 painter = painterResource(R.drawable.remove),
                 contentDescription = null,
+                tint = accentColor,
             )
         }
 
@@ -936,6 +952,7 @@ fun <T> ValueAdjuster(
             text = valueText(currentValue),
             style = MaterialTheme.typography.titleMedium,
             textAlign = TextAlign.Center,
+            color = accentColor,
             modifier = Modifier.width(80.dp),
         )
 
@@ -948,6 +965,7 @@ fun <T> ValueAdjuster(
             Icon(
                 painter = painterResource(R.drawable.add),
                 contentDescription = null,
+                tint = accentColor,
             )
         }
     }

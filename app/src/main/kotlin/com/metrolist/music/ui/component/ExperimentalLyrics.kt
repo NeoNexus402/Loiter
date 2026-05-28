@@ -116,6 +116,8 @@ import com.metrolist.music.lyrics.lyricsTextLooksSynced
 import com.metrolist.music.ui.component.shimmer.ShimmerHost
 import com.metrolist.music.ui.component.shimmer.TextPlaceholder
 import com.metrolist.music.ui.screens.settings.LyricsPosition
+import com.metrolist.music.ui.theme.LayoutTheme
+import com.metrolist.music.ui.theme.LocalLayoutThemeConfig
 import com.metrolist.music.ui.screens.settings.defaultList
 import com.metrolist.music.ui.utils.fadingEdge
 import com.metrolist.music.utils.ComposeToImage
@@ -299,6 +301,16 @@ fun ExperimentalLyrics(
     val expressiveAccent = when (playerBackground) {
         PlayerBackgroundStyle.DEFAULT -> MaterialTheme.colorScheme.primary
         PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT -> Color.White
+    }
+
+    val layoutThemeConfig = LocalLayoutThemeConfig.current
+    val isBlackhole = layoutThemeConfig.theme == LayoutTheme.BLACKHOLE
+    val focusWordMap = remember(lines, isBlackhole) {
+        if (isBlackhole) selectFocusWords(lines) else emptyMap()
+    }
+    val blackholeMutedColor = remember { Color(0xFF757575) }
+    val focusHighlightColor = remember(layoutThemeConfig, expressiveAccent) {
+        layoutThemeConfig.effectiveAccentColor ?: expressiveAccent
     }
 
     var activeLineIndices by remember { mutableStateOf(emptySet<Int>()) }
@@ -785,6 +797,8 @@ fun ExperimentalLyrics(
                                         respectAgentPositioning = respectAgentPositioning, isAutoScrollEnabled = isAutoScrollEnabled,
                                         displayedCurrentLineIndex = deferredCurrentLineIndex, romanizeAsMain = romanizeAsMain,
                                         enabledLanguages = enabledLanguages, romanizeLyrics = currentSong?.romanizeLyrics == true,
+                                        focusWordIndex = focusWordMap[index], mutedColor = if (isBlackhole) blackholeMutedColor else null,
+                                        highlightColor = if (isBlackhole) focusHighlightColor else null,
                                         onSizeChanged = { itemHeights[listIndex] = it },
                                         onClick = {
                                             if (isSelectionModeActive) {

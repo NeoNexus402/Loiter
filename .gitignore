@@ -38,23 +38,11 @@ captures/
 
 # IntelliJ
 *.iml
-.idea
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/gradle.xml
-.idea/assetWizardSettings.xml
-.idea/dictionaries
-.idea/libraries
-# Android Studio 3 in .gitignore file.
-.idea/caches
-.idea/modules.xml
-# Comment next line if keeping position of elements in Navigation Editor is relevant for you
-.idea/navEditor.xml
+.idea/
 
-# Keystore files
-# Uncomment the following lines if you do not want to check your keystore files in.
-#*.jks
-#*.keystore
+# Keystore files - NEVER commit these to version control
+*.jks
+*.keystore
 app/persistent-debug.keystore
 # ^^^ think twice before removing this gitignore, it became so FUCKING
 # annoying to unstage this file every time i want to commit stuff
@@ -62,6 +50,9 @@ app/persistent-debug.keystore
 # External native build folder generated in Android Studio 2.2 and later
 .externalNativeBuild
 .cxx/
+
+# Google Services (e.g. APIs or Firebase)
+google-services.json
 
 # Freeline
 freeline.py
@@ -83,26 +74,16 @@ lint/intermediates/
 lint/generated/
 lint/outputs/
 lint/tmp/
-# lint/reports/
 
+# Android Profiling
+*.hprof
+
+# OS files
 .DS_Store
-/app/release/output-metadata.json
+Thumbs.db
 
-.kotlin
-app/release
-output-metadata.json
+# Kotlin
+*.kotlin_module
 
-# VS Code
-.vscode/
-
-# Binary files and core dumps
-core
-core.*
-*.so
-*.bin
-.env
-app/src/main/java/com/metrolist/music/listentogether/proto/*
-
-# FFTW third-party library build artifacts
-.build-fftw
-app/src/main/cpp/coverart/
+# Local configuration for testing
+local-test.properties
