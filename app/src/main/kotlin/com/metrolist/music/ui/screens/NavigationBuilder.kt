@@ -24,6 +24,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.navArgument
 import com.metrolist.music.constants.DarkModeKey
+import com.metrolist.music.ui.theme.LayoutTheme
+import com.metrolist.music.ui.theme.LocalLayoutTheme
 import com.metrolist.music.constants.PureBlackKey
 import com.metrolist.music.ui.screens.artist.ArtistAlbumsScreen
 import com.metrolist.music.ui.screens.artist.ArtistItemsScreen
@@ -53,6 +55,8 @@ import com.metrolist.music.ui.screens.settings.DiscordLoginScreen
 import com.metrolist.music.ui.screens.settings.PlayerSettings
 import com.metrolist.music.ui.screens.settings.PrivacySettings
 import com.metrolist.music.ui.screens.settings.RomanizationSettings
+import com.metrolist.music.ui.screens.settings.LoiterProfileScreen
+import com.metrolist.music.ui.screens.settings.LoiterSettingsScreen
 import com.metrolist.music.ui.screens.settings.SettingsScreen
 import com.metrolist.music.ui.screens.settings.StorageSettings
 import com.metrolist.music.ui.screens.settings.ThemeScreen
@@ -76,7 +80,11 @@ fun NavGraphBuilder.navigationBuilder(
     snackbarHostState: SnackbarHostState,
 ) {
     composable(Screens.Home.route) {
-        HomeScreen(navController = navController, snackbarHostState = snackbarHostState)
+        if (LocalLayoutTheme.current == LayoutTheme.LOITER) {
+            LoiterHomeScreen(navController = navController)
+        } else {
+            HomeScreen(navController = navController, snackbarHostState = snackbarHostState)
+        }
     }
 
     composable(Screens.Search.route) { backStackEntry ->
@@ -99,7 +107,11 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable(Screens.Library.route) {
-        LibraryScreen(navController)
+        if (LocalLayoutTheme.current == LayoutTheme.LOITER) {
+            LoiterLibraryScreen(navController = navController)
+        } else {
+            LibraryScreen(navController)
+        }
     }
 
     composable(Screens.ListenTogether.route) {
@@ -349,7 +361,11 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable("settings") {
-        SettingsScreen(navController, latestVersionName)
+        if (LocalLayoutTheme.current == LayoutTheme.LOITER) {
+            LoiterSettingsScreen(navController = navController, latestVersionName = latestVersionName)
+        } else {
+            SettingsScreen(navController, latestVersionName)
+        }
     }
 
     composable("settings/appearance") {
@@ -422,6 +438,10 @@ fun NavGraphBuilder.navigationBuilder(
 
     composable("login") {
         LoginScreen(navController)
+    }
+
+    composable("profile") {
+        LoiterProfileScreen(navController = navController, activity = activity)
     }
 
     composable("wrapped") {

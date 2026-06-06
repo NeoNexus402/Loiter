@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
@@ -105,11 +104,6 @@ fun BottomSheet(
                         state.performFling(velocity, onDismiss)
                     }
                 )
-            }
-            .graphicsLayer {
-                val cornerRadius = if (!state.isExpanded) 16.dp.toPx() else 0f
-                shape = RoundedCornerShape(topStart = cornerRadius, topEnd = cornerRadius)
-                clip = true
             }
     ) {
         BackHandler(enabled = !state.isDismissed) {

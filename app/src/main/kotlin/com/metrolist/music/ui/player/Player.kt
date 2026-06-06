@@ -801,6 +801,7 @@ fun BottomSheetPlayer(
 
     val bottomSheetBackgroundColor =
         when {
+            themeConfig.theme == LayoutTheme.LOITER -> MaterialTheme.colorScheme.background
             themeConfig.forceBlackBackground -> Color.Black
             playerBackground == PlayerBackgroundStyle.BLUR || playerBackground == PlayerBackgroundStyle.GRADIENT ->
                 MaterialTheme.colorScheme.surfaceContainer
@@ -1877,7 +1878,7 @@ fun BottomSheetPlayer(
                         modifier =
                             Modifier
                                 .weight(
-                                    if (themeConfig.playerLayout == PlayerLayout.MODERN) {
+                                    if (themeConfig.playerLayout == PlayerLayout.MODERN || themeConfig.theme == LayoutTheme.LOITER) {
                                         1f
                                     } else {
                                         if (showInlineLyrics) 0.65f else 1f
@@ -1887,7 +1888,17 @@ fun BottomSheetPlayer(
                                 .animateContentSize()
                                 .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top)),
                     ) {
-                        if (themeConfig.playerLayout == PlayerLayout.MODERN) {
+                        if (themeConfig.theme == LayoutTheme.LOITER) {
+                            Box(modifier = Modifier.weight(1f)) {
+                                LoiterPlayerContent(
+                                    playerConnection = playerConnection,
+                                    navController = navController,
+                                    showInlineLyrics = showInlineLyrics,
+                                    onToggleLyrics = { showInlineLyrics = !showInlineLyrics },
+                                    playerBottomSheetState = state,
+                                )
+                            }
+                        } else if (themeConfig.playerLayout == PlayerLayout.MODERN) {
                             Box(modifier = Modifier.weight(1f)) {
                                 BlackholePlayerContent(
                                     playerConnection = playerConnection,
@@ -1940,7 +1951,7 @@ fun BottomSheetPlayer(
                             )
                             .animateContentSize(),
                 ) {
-                    if (themeConfig.playerLayout != PlayerLayout.MODERN) {
+                    if (themeConfig.playerLayout != PlayerLayout.MODERN && themeConfig.theme != LayoutTheme.LOITER) {
                         Box(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier.weight(1f),
@@ -1972,7 +1983,17 @@ fun BottomSheetPlayer(
                     }
 
                     mediaMetadata?.let {
-                        if (themeConfig.playerLayout == PlayerLayout.MODERN) {
+                        if (themeConfig.theme == LayoutTheme.LOITER) {
+                            Box(modifier = Modifier.weight(1f)) {
+                                LoiterPlayerContent(
+                                    playerConnection = playerConnection,
+                                    navController = navController,
+                                    showInlineLyrics = showInlineLyrics,
+                                    onToggleLyrics = { showInlineLyrics = !showInlineLyrics },
+                                    playerBottomSheetState = state,
+                                )
+                            }
+                        } else if (themeConfig.playerLayout == PlayerLayout.MODERN) {
                             Box(modifier = Modifier.weight(1f)) {
                                 BlackholePlayerContent(
                                     playerConnection = playerConnection,

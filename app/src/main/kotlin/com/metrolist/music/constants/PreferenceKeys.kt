@@ -55,6 +55,7 @@ enum class DensityScale(
 val DefaultOpenTabKey = stringPreferencesKey("defaultOpenTab")
 val SlimNavBarKey = booleanPreferencesKey("slimNavBar")
 val GridItemsSizeKey = stringPreferencesKey("gridItemSize")
+val GridAppearanceKey = stringPreferencesKey("gridAppearance")
 val SliderStyleKey = stringPreferencesKey("sliderStyle")
 val SquigglySliderKey = booleanPreferencesKey("squigglySlider")
 val SwipeToSongKey = booleanPreferencesKey("SwipeToSong")
@@ -365,6 +366,14 @@ enum class MixSortType {
 enum class GridItemSize {
     BIG,
     SMALL,
+}
+
+enum class GridAppearance {
+    DEFAULT,
+    ALL_ROUND,
+    BOX,
+    SQUARE,
+    INVERTED,
 }
 
 enum class MyTopFilter {

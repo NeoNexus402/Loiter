@@ -18,7 +18,7 @@ enum class LayoutTheme(
     val isComingSoon: Boolean = false,
 ) {
     METROLIST("Metrolist", "The default Metrolist experience — Material 3 with dynamic colors"),
-    LOITER("Loiter", "The new Loiter experience — coming soon", isComingSoon = true),
+    LOITER("Loiter", "Ultra-dark theme with lavender accents and dynamic album-art colors"),
     YT_MUSIC("YouTube Music", "Inspired by YouTube Music — full-bleed thumbnails, compact controls", isComingSoon = true),
     SPOTIFY("Spotify", "Inspired by Spotify — bold typography, dark accents, gradient player", isComingSoon = true),
     BLACKHOLE("Blackhole", "Inspired by Blackhole — large artwork, heavy blur, wave animations"),
@@ -232,9 +232,49 @@ val blackholeThemeConfig = LayoutThemeConfig(
     seedColor = null,
 )
 
+private val loiterCardCornerRadius = 24.dp
+private val loiterPlayerCornerRadius = 24.dp
+private val loiterPillRadius = 100.dp
+
+val loiterThemeConfig = LayoutThemeConfig(
+    theme = LayoutTheme.LOITER,
+    fontFamily = FontFamily.Default,
+    typography = AppTypography,
+    playerCornerRadius = loiterPlayerCornerRadius,
+    cardCornerRadius = loiterCardCornerRadius,
+    useCompactPlayerControls = true,
+    showGradientOverlay = true,
+    accentColor = Color(0xFFD1A3FF),
+    playPauseButtonSize = 72.dp,
+    controlButtonSize = 32.dp,
+    songTitleStyle = TextStyle(
+        fontWeight = FontWeight.Bold,
+        fontSize = 22.sp,
+        lineHeight = 26.sp,
+        letterSpacing = 0.sp,
+    ),
+    artistStyle = TextStyle(
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp,
+        lineHeight = 18.sp,
+        letterSpacing = 0.1.sp,
+    ),
+    defaultPlayerBackground = "GRADIENT",
+    navBarStyle = NavBarStyle.PILL,
+    useAlbumArtBorder = true,
+    forceDarkTheme = false,
+    lockDynamicTheme = false,
+    lockPlayerStyle = true,
+    lockSliderStyle = true,
+    lockSlimNavBar = true,
+    lockNewMiniPlayerDesign = true,
+    lockNewPlayerDesign = true,
+    lockThemeOverview = true,
+)
+
 fun configForTheme(theme: LayoutTheme, blackholeSeedColor: Color? = null): LayoutThemeConfig = when (theme) {
     LayoutTheme.METROLIST -> metrolistThemeConfig
-    LayoutTheme.LOITER -> metrolistThemeConfig
+    LayoutTheme.LOITER -> loiterThemeConfig
     LayoutTheme.YT_MUSIC -> ytMusicThemeConfig
     LayoutTheme.SPOTIFY -> spotifyThemeConfig
     LayoutTheme.BLACKHOLE -> blackholeThemeConfig.copy(

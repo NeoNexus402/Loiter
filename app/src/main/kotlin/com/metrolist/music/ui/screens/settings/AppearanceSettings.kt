@@ -162,10 +162,7 @@ fun AppearanceSettings(
     val isUsingCustomColor = selectedThemeColorInt != DefaultThemeColor.toArgb()
     val (currentLayoutThemeRaw, onLayoutThemeChange) =
         rememberEnumPreference(LayoutThemeKey, defaultValue = LayoutTheme.METROLIST)
-    // Migrate old "LOITER" stored value to "METROLIST"
-    val currentLayoutTheme = remember(currentLayoutThemeRaw) {
-        if (currentLayoutThemeRaw.name == "LOITER") LayoutTheme.METROLIST else currentLayoutThemeRaw
-    }
+    val currentLayoutTheme = currentLayoutThemeRaw
     val (blackholeSeedColorInt, onBlackholeSeedColorChange) = rememberPreference(
         BlackholeColorKey, defaultValue = Color(0xFF1DB954).toArgb(),
     )

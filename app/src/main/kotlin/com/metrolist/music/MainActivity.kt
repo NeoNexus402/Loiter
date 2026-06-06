@@ -190,6 +190,7 @@ import com.metrolist.music.ui.theme.LocalLayoutTheme
 import com.metrolist.music.ui.theme.LocalLayoutThemeConfig
 import com.metrolist.music.ui.theme.MiniPlayerLayout
 import com.metrolist.music.ui.theme.MetrolistTheme
+import com.metrolist.music.ui.theme.LoiterDefaultAccent
 import com.metrolist.music.ui.theme.configForTheme
 import com.metrolist.music.ui.theme.extractThemeColor
 import com.metrolist.music.ui.utils.appBarScrollBehavior
@@ -534,9 +535,7 @@ class MainActivity : ComponentActivity() {
         }
 
         val currentLayoutThemeRaw by rememberEnumPreference(LayoutThemeKey, defaultValue = LayoutTheme.METROLIST)
-        val currentLayoutTheme = remember(currentLayoutThemeRaw) {
-            if (currentLayoutThemeRaw.name == "LOITER") LayoutTheme.METROLIST else currentLayoutThemeRaw
-        }
+        val currentLayoutTheme = currentLayoutThemeRaw
         val (blackholeSeedColorInt) = rememberPreference(BlackholeColorKey, defaultValue = Color(0xFF1DB954).toArgb())
         val blackholeSeedColor = remember(blackholeSeedColorInt) { Color(blackholeSeedColorInt) }
         val enableDynamicTheme by rememberPreference(DynamicThemeKey, defaultValue = true)
@@ -671,6 +670,8 @@ class MainActivity : ComponentActivity() {
             themeColor = themeColor,
             forceBlackBackground = layoutThemeConfig.forceBlackBackground,
             useNeutralScheme = isNonLoiterTheme,
+            isLoiter = currentLayoutTheme == LayoutTheme.LOITER,
+            dynamicAccentColor = layoutThemeConfig.accentColor ?: LoiterDefaultAccent,
         ) {
             BoxWithConstraints(
                 modifier =
@@ -991,7 +992,11 @@ class MainActivity : ComponentActivity() {
                         !(pauseListenHistory && eventCount == 0)
                     }
 
-                val baseBg = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer
+                val baseBg = when {
+                    currentLayoutTheme == LayoutTheme.LOITER -> MaterialTheme.colorScheme.background
+                    pureBlack -> Color.Black
+                    else -> MaterialTheme.colorScheme.surfaceContainer
+                }
 
                 val layoutThemeConfig = remember(currentLayoutTheme, blackholeSeedColor) { configForTheme(currentLayoutTheme, blackholeSeedColor) }
 

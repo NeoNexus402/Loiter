@@ -28,12 +28,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.metrolist.music.R
+import com.metrolist.music.ui.theme.LayoutTheme
+import com.metrolist.music.ui.theme.LocalDynamicAccentColor
+import com.metrolist.music.ui.theme.LocalLayoutTheme
 import com.metrolist.music.ui.theme.LocalLayoutThemeConfig
 
 @Composable
@@ -46,7 +51,25 @@ fun NavigationTitle(
     onPlayAllClick: (() -> Unit)? = null,
 ) {
     val themeConfig = LocalLayoutThemeConfig.current
-    val accentColor = themeConfig.effectiveAccentColor ?: MaterialTheme.colorScheme.primary
+    val rawAccent = if (LocalLayoutTheme.current == LayoutTheme.LOITER)
+        LocalDynamicAccentColor.current
+    else
+        themeConfig.effectiveAccentColor ?: MaterialTheme.colorScheme.primary
+    val bgLuminance = MaterialTheme.colorScheme.surface.luminance()
+    val accentLuminance = rawAccent.luminance()
+    val accentColor = if (
+        (bgLuminance > 0.5f && accentLuminance > 0.45f) ||
+        (bgLuminance < 0.5f && accentLuminance < 0.25f)
+    ) {
+        val blend = 0.35f
+        Color(
+            red = rawAccent.red * (1 - blend) + MaterialTheme.colorScheme.onSurface.red * blend,
+            green = rawAccent.green * (1 - blend) + MaterialTheme.colorScheme.onSurface.green * blend,
+            blue = rawAccent.blue * (1 - blend) + MaterialTheme.colorScheme.onSurface.blue * blend,
+        )
+    } else {
+        rawAccent
+    }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,

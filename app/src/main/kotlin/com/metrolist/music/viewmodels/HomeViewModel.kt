@@ -22,8 +22,10 @@ import com.metrolist.innertube.models.YTItem
 import com.metrolist.innertube.models.filterExplicit
 import com.metrolist.innertube.models.filterVideoSongs
 import com.metrolist.innertube.models.filterYoutubeShorts
+import com.metrolist.innertube.pages.BrowseResult
 import com.metrolist.innertube.pages.ExplorePage
 import com.metrolist.innertube.pages.HomePage
+import com.metrolist.innertube.pages.MoodAndGenres
 import com.metrolist.innertube.utils.completed
 import com.metrolist.music.constants.HideExplicitKey
 import com.metrolist.music.constants.HideVideoSongsKey
@@ -101,6 +103,8 @@ class HomeViewModel @Inject constructor(
     val explorePage = MutableStateFlow<ExplorePage?>(null)
     val communityPlaylists = MutableStateFlow<List<CommunityPlaylistItem>?>(null)
     val selectedChip = MutableStateFlow<HomePage.Chip?>(null)
+    val selectedMoodGenre = MutableStateFlow<MoodAndGenres.Item?>(null)
+    val filteredMoodContent = MutableStateFlow<BrowseResult?>(null)
     private val previousHomePage = MutableStateFlow<HomePage?>(null)
 
     // Official API data for podcast sections
@@ -644,6 +648,28 @@ class HomeViewModel @Inject constructor(
             if (chip.title.contains("Podcast", ignoreCase = true)) {
                 fetchPodcastData()
             }
+        }
+    }
+
+    fun selectMoodGenre(mood: MoodAndGenres.Item?) {
+        selectedMoodGenre.value = mood
+        if (mood != null) {
+            viewModelScope.launch(Dispatchers.IO) {
+                val hideExplicit = context.dataStore.get(HideExplicitKey, false)
+                val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
+                val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
+                YouTube.browse(
+                    browseId = mood.endpoint.browseId,
+                    params = mood.endpoint.params,
+                ).onSuccess { result ->
+                    filteredMoodContent.value = result
+                        .filterExplicit(hideExplicit)
+                        .filterVideoSongs(hideVideoSongs)
+                        .filterYoutubeShorts(hideYoutubeShorts)
+                }.onFailure { reportException(it) }
+            }
+        } else {
+            filteredMoodContent.value = null
         }
     }
 

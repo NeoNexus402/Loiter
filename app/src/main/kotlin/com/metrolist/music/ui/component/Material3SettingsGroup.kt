@@ -34,6 +34,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
+import com.metrolist.music.ui.theme.LayoutTheme
+import com.metrolist.music.ui.theme.LocalDynamicAccentColor
+import com.metrolist.music.ui.theme.LocalLayoutTheme
 import com.metrolist.music.ui.theme.LocalLayoutThemeConfig
 import androidx.compose.ui.unit.dp
 
@@ -54,7 +57,10 @@ fun Material3SettingsGroup(
     ) {
         // Section title
         title?.let {
-            val sectionAccentColor = LocalLayoutThemeConfig.current.effectiveAccentColor ?: MaterialTheme.colorScheme.primary
+            val sectionAccentColor = if (LocalLayoutTheme.current == LayoutTheme.LOITER)
+                LocalDynamicAccentColor.current
+            else
+                LocalLayoutThemeConfig.current.effectiveAccentColor ?: MaterialTheme.colorScheme.primary
             Text(
                 text = it,
                 style = MaterialTheme.typography.labelLarge,
@@ -104,7 +110,10 @@ fun Material3SettingsGroup(
 private fun Material3SettingsItemRow(
     item: Material3SettingsItem
 ) {
-    val settingsAccentColor = LocalLayoutThemeConfig.current.effectiveAccentColor ?: MaterialTheme.colorScheme.primary
+    val settingsAccentColor = if (LocalLayoutTheme.current == LayoutTheme.LOITER)
+        LocalDynamicAccentColor.current
+    else
+        LocalLayoutThemeConfig.current.effectiveAccentColor ?: MaterialTheme.colorScheme.primary
 
     Row(
         modifier = Modifier

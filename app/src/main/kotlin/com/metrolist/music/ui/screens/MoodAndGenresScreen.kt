@@ -142,6 +142,7 @@ fun MoodAndGenresButton(
             style = MaterialTheme.typography.labelLarge,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            softWrap = false,
         )
     }
 }
