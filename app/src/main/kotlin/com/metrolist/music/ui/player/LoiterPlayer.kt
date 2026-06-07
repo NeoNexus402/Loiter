@@ -1,5 +1,6 @@
 package com.metrolist.music.ui.player
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
@@ -30,17 +32,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -51,8 +57,13 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.Player
 import coil3.compose.AsyncImage
+import com.metrolist.music.LocalDatabase
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
+import com.metrolist.music.db.entities.LyricsEntity
+import dagger.hilt.android.EntryPointAccessors
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import com.metrolist.music.lyrics.LyricsUtils
 import com.metrolist.music.lyrics.lyricsTextLooksSynced
 import com.metrolist.music.ui.component.BottomSheetState
@@ -61,7 +72,7 @@ import com.metrolist.music.ui.menu.PlayerMenu
 import com.metrolist.music.ui.theme.LocalDynamicAccentColor
 import kotlinx.coroutines.delay
 
-private val albumArtFraction = 0.75f
+private val albumArtFraction = 0.85f
 private val ringWidth = 5.dp
 
 @Composable
@@ -78,8 +89,6 @@ fun LoiterPlayerContent(
 
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
     val isPlaying by playerConnection.isPlaying.collectAsStateWithLifecycle()
-    val repeatMode by playerConnection.repeatMode.collectAsStateWithLifecycle()
-    val shuffleMode = playerConnection.player.shuffleModeEnabled
     val currentSong by playerConnection.currentSong.collectAsStateWithLifecycle(initialValue = null)
     val currentLyrics by playerConnection.currentLyrics.collectAsStateWithLifecycle(initialValue = null)
     val isEpisode = currentSong?.song?.isEpisode == true
@@ -89,6 +98,10 @@ fun LoiterPlayerContent(
     var duration by remember { mutableLongStateOf(0L) }
     var sliderPosition by remember { mutableStateOf<Long?>(null) }
 
+    val context = LocalContext.current
+    val database = LocalDatabase.current
+    val coroutineScope = rememberCoroutineScope()
+
     LaunchedEffect(Unit) {
         while (true) {
             duration = playerConnection.player.duration
@@ -96,6 +109,27 @@ fun LoiterPlayerContent(
                 position = playerConnection.player.currentPosition
             }
             delay(200)
+        }
+    }
+
+    val metadata = mediaMetadata
+    LaunchedEffect(metadata?.id, currentLyrics) {
+        if (metadata != null && currentLyrics == null) {
+            delay(500)
+            coroutineScope.launch(Dispatchers.IO) {
+                try {
+                    val entryPoint =
+                        EntryPointAccessors.fromApplication(
+                            context.applicationContext,
+                            com.metrolist.music.di.LyricsHelperEntryPoint::class.java,
+                        )
+                    val lyricsHelper = entryPoint.lyricsHelper()
+                    val fetchedLyricsWithProvider = lyricsHelper.getLyrics(metadata)
+                    database.query {
+                        upsert(LyricsEntity(metadata.id, fetchedLyricsWithProvider.lyrics, fetchedLyricsWithProvider.provider))
+                    }
+                } catch (_: Exception) { }
+            }
         }
     }
 
@@ -149,6 +183,12 @@ fun LoiterPlayerContent(
                 CircularProgressRing(
                     progress = progress,
                     accentColor = dynamicAccent,
+                    onSeek = { newProgress ->
+                        val seekPosition = (newProgress * duration).toLong()
+                        if (seekPosition >= 0 && duration > 0) {
+                            playerConnection.player.seekTo(seekPosition)
+                        }
+                    },
                     modifier = Modifier.fillMaxSize(),
                 )
 
@@ -215,99 +255,71 @@ fun LoiterPlayerContent(
             )
 
             val lyricsEntity = currentLyrics
-            if (showInlineLyrics && lyricsEntity != null && lyricsEntity.lyrics != com.metrolist.music.db.entities.LyricsEntity.LYRICS_NOT_FOUND) {
-                Spacer(modifier = Modifier.height(12.dp))
-                LyricsSnippet(
-                    lyrics = lyricsEntity.lyrics,
-                    progress = progress,
-                    duration = duration,
-                    accentColor = dynamicAccent,
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconButton(
-                onClick = {
-                    val modes = listOf(
-                        Player.REPEAT_MODE_OFF,
-                        Player.REPEAT_MODE_ALL,
-                        Player.REPEAT_MODE_ONE,
-                    )
-                    val nextIndex = (modes.indexOf(repeatMode) + 1) % modes.size
-                    playerConnection.player.repeatMode = modes[nextIndex]
-                },
-            ) {
-                Icon(
-                    painter = painterResource(
-                        when (repeatMode) {
-                            Player.REPEAT_MODE_ONE -> R.drawable.repeat_one
-                            else -> R.drawable.repeat
-                        }
-                    ),
-                    contentDescription = null,
-                    tint = if (repeatMode != Player.REPEAT_MODE_OFF) dynamicAccent else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp),
-                )
-            }
-
-            IconButton(onClick = { playerConnection.seekToPrevious() }) {
-                Icon(
-                    painter = painterResource(R.drawable.skip_previous),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(28.dp),
-                )
-            }
-
+            Spacer(modifier = Modifier.height(12.dp))
             Box(
                 modifier = Modifier
-                    .size(72.dp)
-                    .clip(CircleShape)
-                    .background(dynamicAccent),
+                    .fillMaxWidth()
+                    .animateContentSize(),
                 contentAlignment = Alignment.Center,
             ) {
-                IconButton(onClick = {
-                    if (isPlaying) playerConnection.player.pause()
-                    else playerConnection.player.play()
-                }) {
-                    Icon(
-                        painter = painterResource(
-                            if (isPlaying) R.drawable.pause else R.drawable.play
-                        ),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(40.dp),
+                if (showInlineLyrics && lyricsEntity != null && lyricsEntity.lyrics != com.metrolist.music.db.entities.LyricsEntity.LYRICS_NOT_FOUND) {
+                    LyricsSnippet(
+                        lyrics = lyricsEntity.lyrics,
+                        progress = progress,
+                        duration = duration,
+                        accentColor = dynamicAccent,
                     )
                 }
             }
 
-            IconButton(onClick = { playerConnection.seekToNext() }) {
-                Icon(
-                    painter = painterResource(R.drawable.skip_next),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(28.dp),
-                )
-            }
+            Spacer(modifier = Modifier.weight(1f))
 
-            IconButton(onClick = onToggleLyrics) {
-                Icon(
-                    painter = painterResource(R.drawable.lyrics),
-                    contentDescription = null,
-                    tint = if (showInlineLyrics) dynamicAccent else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp),
-                )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                IconButton(onClick = { playerConnection.seekToPrevious() }) {
+                    Icon(
+                        painter = painterResource(R.drawable.skip_previous),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(28.dp),
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(72.dp)
+                        .clip(CircleShape)
+                        .background(dynamicAccent),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    IconButton(onClick = {
+                        if (isPlaying) playerConnection.player.pause()
+                        else playerConnection.player.play()
+                    }) {
+                        Icon(
+                            painter = painterResource(
+                                if (isPlaying) R.drawable.pause else R.drawable.play
+                            ),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(40.dp),
+                        )
+                    }
+                }
+
+                IconButton(onClick = { playerConnection.seekToNext() }) {
+                    Icon(
+                        painter = painterResource(R.drawable.skip_next),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(28.dp),
+                    )
+                }
             }
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
@@ -388,40 +400,52 @@ private fun TopBar(
 private fun CircularProgressRing(
     progress: Float,
     accentColor: Color,
+    onSeek: (Float) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
 
     Box(
-        modifier = modifier.drawBehind {
-            val stroke = ringWidth.toPx()
-            val padding = stroke / 2f
-            val arcSize = Size(size.width - stroke, size.height - stroke)
-            val arcTopLeft = Offset(padding, padding)
-            val sweep = progress * 360f
+        modifier = modifier
+            .drawBehind {
+                val stroke = ringWidth.toPx()
+                val padding = stroke / 2f
+                val arcSize = Size(size.width - stroke, size.height - stroke)
+                val arcTopLeft = Offset(padding, padding)
+                val sweep = progress * 360f
 
-            drawArc(
-                color = trackColor,
-                startAngle = -90f,
-                sweepAngle = 360f,
-                useCenter = false,
-                topLeft = arcTopLeft,
-                size = arcSize,
-                style = Stroke(width = stroke, cap = StrokeCap.Round),
-            )
-
-            if (sweep > 0f) {
                 drawArc(
-                    color = accentColor,
+                    color = trackColor,
                     startAngle = -90f,
-                    sweepAngle = sweep,
+                    sweepAngle = 360f,
                     useCenter = false,
                     topLeft = arcTopLeft,
                     size = arcSize,
                     style = Stroke(width = stroke, cap = StrokeCap.Round),
                 )
+
+                if (sweep > 0f) {
+                    drawArc(
+                        color = accentColor,
+                        startAngle = -90f,
+                        sweepAngle = sweep,
+                        useCenter = false,
+                        topLeft = arcTopLeft,
+                        size = arcSize,
+                        style = Stroke(width = stroke, cap = StrokeCap.Round),
+                    )
+                }
             }
-        },
+            .pointerInput(Unit) {
+                detectDragGestures { change, _ ->
+                    change.consume()
+                    val center = Offset(size.width / 2f, size.height / 2f)
+                    val dx = change.position.x - center.x
+                    val dy = change.position.y - center.y
+                    val angle = (Math.atan2(dy.toDouble(), dx.toDouble()) + Math.PI / 2).let { if (it < 0) it + 2 * Math.PI else it }
+                    onSeek((angle / (2 * Math.PI)).toFloat().coerceIn(0f, 1f))
+                }
+            },
     )
 }
 
@@ -448,39 +472,55 @@ private fun LyricsSnippet(
         }
     }
 
-    val displayLines = remember(currentLineIndex, parsedLines) {
-        val start = (currentLineIndex - 1).coerceAtLeast(0)
-        val end = (currentLineIndex + 2).coerceAtMost(parsedLines.size)
-        parsedLines.subList(start, end)
-    }
-    val centerIdx = remember(currentLineIndex, displayLines) {
-        val start = (currentLineIndex - 1).coerceAtLeast(0)
-        currentLineIndex - start
-    }
+    val currentText = parsedLines.getOrNull(currentLineIndex)?.text ?: return
+    val previousText = parsedLines.getOrNull(currentLineIndex - 1)?.text
+    val nextText = parsedLines.getOrNull(currentLineIndex + 1)?.text
+
+    val lineStyle = MaterialTheme.typography.bodyMedium.copy(
+        fontStyle = FontStyle.Italic,
+        fontSize = 24.sp,
+        fontWeight = FontWeight.ExtraBold,
+        lineHeight = 31.2.sp,
+        textAlign = TextAlign.Center,
+    )
+    val mutedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
+    val lineHeightDp = with(LocalDensity.current) { 31.2.sp.toDp() }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        displayLines.forEachIndexed { idx, entry ->
-            val isCurrent = idx == centerIdx
+        if (previousText != null) {
             Text(
-                text = entry.text,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontStyle = FontStyle.Italic,
-                    fontSize = if (isCurrent) 18.sp else 15.sp,
-                ),
-                color = if (isCurrent) accentColor else MaterialTheme.colorScheme.onSurfaceVariant,
+                text = previousText,
+                style = lineStyle,
+                color = mutedColor,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
-            if (!isCurrent) {
-                Spacer(modifier = Modifier.height(2.dp))
-            } else {
-                Spacer(modifier = Modifier.height(4.dp))
-            }
+        } else {
+            Spacer(modifier = Modifier.height(lineHeightDp))
+        }
+
+        Text(
+            text = currentText,
+            style = lineStyle,
+            color = accentColor,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        if (nextText != null) {
+            Text(
+                text = nextText,
+                style = lineStyle,
+                color = mutedColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        } else {
+            Spacer(modifier = Modifier.height(lineHeightDp))
         }
     }
 }

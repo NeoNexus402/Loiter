@@ -595,7 +595,7 @@ class MainActivity : ComponentActivity() {
 
         val (selectedThemeColorInt) = rememberPreference(SelectedThemeColorKey, defaultValue = DefaultThemeColor.toArgb())
         val userSelectedThemeColor = Color(selectedThemeColorInt)
-        val isNonLoiterTheme = currentLayoutTheme != LayoutTheme.METROLIST
+        val isNonLoiterTheme = currentLayoutTheme == LayoutTheme.BLACKHOLE
         val selectedThemeColor = remember(userSelectedThemeColor, layoutThemeConfig, currentLayoutTheme) {
             val seed = layoutThemeConfig.seedColor
             // For non-Loiter themes, the theme color seed doesn't matter because
@@ -671,7 +671,7 @@ class MainActivity : ComponentActivity() {
             forceBlackBackground = layoutThemeConfig.forceBlackBackground,
             useNeutralScheme = isNonLoiterTheme,
             isLoiter = currentLayoutTheme == LayoutTheme.LOITER,
-            dynamicAccentColor = layoutThemeConfig.accentColor ?: LoiterDefaultAccent,
+            dynamicAccentColor = if (currentLayoutTheme == LayoutTheme.LOITER) themeColor else (layoutThemeConfig.accentColor ?: LoiterDefaultAccent),
         ) {
             BoxWithConstraints(
                 modifier =
@@ -703,8 +703,10 @@ class MainActivity : ComponentActivity() {
 
                 val (listenTogetherInTopBar) = rememberPreference(ListenTogetherInTopBarKey, defaultValue = true)
                 val navigationItems =
-                    remember(listenTogetherInTopBar) {
-                        if (listenTogetherInTopBar) {
+                    remember(listenTogetherInTopBar, currentLayoutTheme) {
+                        if (currentLayoutTheme == LayoutTheme.LOITER) {
+                            Screens.LoiterScreens
+                        } else if (listenTogetherInTopBar) {
                             Screens.MainScreens.filter { it != Screens.ListenTogether }
                         } else {
                             Screens.MainScreens
@@ -733,13 +735,21 @@ class MainActivity : ComponentActivity() {
                     }
 
                 val topLevelScreens =
-                    remember {
-                        listOf(
-                            Screens.Home.route,
-                            Screens.Library.route,
-                            Screens.ListenTogether.route,
-                            "settings",
-                        )
+                    remember(currentLayoutTheme) {
+                        if (currentLayoutTheme == LayoutTheme.LOITER) {
+                            listOf(
+                                Screens.Home.route,
+                                Screens.Library.route,
+                                Screens.Profile.route,
+                            )
+                        } else {
+                            listOf(
+                                Screens.Home.route,
+                                Screens.Library.route,
+                                Screens.ListenTogether.route,
+                                "settings",
+                            )
+                        }
                     }
 
                 val (query, onQueryChange) =
@@ -938,7 +948,8 @@ class MainActivity : ComponentActivity() {
                             currentRoute == "listen_together_from_topbar"
                     shouldShowTopBar = currentRoute in topLevelScreens &&
                         currentRoute != "settings" &&
-                        !(isListenTogetherScreen && listenTogetherInTopBar)
+                        !(isListenTogetherScreen && listenTogetherInTopBar) &&
+                        currentLayoutTheme != LayoutTheme.LOITER
                 }
 
                 val coroutineScope = rememberCoroutineScope()

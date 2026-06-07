@@ -499,6 +499,7 @@ fun Queue(
                                         overflow = TextOverflow.Ellipsis,
                                         textAlign = TextAlign.Center,
                                         modifier = Modifier.basicMarquee(),
+                                        style = MaterialTheme.typography.bodySmall,
                                     )
                                 } else {
                                     Text(
@@ -508,6 +509,7 @@ fun Queue(
                                         overflow = TextOverflow.Ellipsis,
                                         textAlign = TextAlign.Center,
                                         modifier = Modifier.basicMarquee(),
+                                        style = MaterialTheme.typography.bodySmall,
                                     )
                                 }
                             }

@@ -133,17 +133,9 @@ fun LoiterProfileScreen(
 
         // Menu Items
         ProfileMenuItem(
-            icon = ImageVector.vectorResource(R.drawable.history),
-            title = stringResource(R.string.history),
-            onClick = { navController.navigate("history") },
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        ProfileMenuItem(
-            icon = ImageVector.vectorResource(R.drawable.stats),
-            title = stringResource(R.string.stats),
-            onClick = { navController.navigate("stats") },
+            icon = ImageVector.vectorResource(R.drawable.settings),
+            title = stringResource(R.string.settings),
+            onClick = { navController.navigate("settings") },
         )
 
         Spacer(Modifier.height(8.dp))
@@ -157,9 +149,9 @@ fun LoiterProfileScreen(
         Spacer(Modifier.height(8.dp))
 
         ProfileMenuItem(
-            icon = ImageVector.vectorResource(R.drawable.settings),
-            title = stringResource(R.string.settings),
-            onClick = { navController.navigate("settings") },
+            icon = ImageVector.vectorResource(R.drawable.history),
+            title = stringResource(R.string.history),
+            onClick = { navController.navigate("history") },
         )
 
         Spacer(Modifier.height(8.dp))
@@ -168,6 +160,22 @@ fun LoiterProfileScreen(
             icon = ImageVector.vectorResource(R.drawable.login),
             title = stringResource(R.string.account),
             onClick = { showAccountDialog = true },
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        ProfileMenuItem(
+            icon = ImageVector.vectorResource(R.drawable.upload),
+            title = stringResource(R.string.import_playlist),
+            onClick = { navController.navigate("settings/integrations/import") },
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        ProfileMenuItem(
+            icon = ImageVector.vectorResource(R.drawable.info),
+            title = stringResource(R.string.about),
+            onClick = { navController.navigate("settings/about") },
         )
 
         Spacer(Modifier.height(24.dp))
