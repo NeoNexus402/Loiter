@@ -304,14 +304,6 @@ fun ExperimentalLyrics(
     }
 
     val layoutThemeConfig = LocalLayoutThemeConfig.current
-    val isBlackhole = layoutThemeConfig.theme == LayoutTheme.BLACKHOLE
-    val focusWordMap = remember(lines, isBlackhole) {
-        if (isBlackhole) selectFocusWords(lines) else emptyMap()
-    }
-    val blackholeMutedColor = remember { Color(0xFF757575) }
-    val focusHighlightColor = remember(layoutThemeConfig, expressiveAccent) {
-        layoutThemeConfig.effectiveAccentColor ?: expressiveAccent
-    }
 
     var activeLineIndices by remember { mutableStateOf(emptySet<Int>()) }
     var scrollTargetIndex by rememberSaveable { mutableIntStateOf(-1) }
@@ -797,8 +789,8 @@ fun ExperimentalLyrics(
                                         respectAgentPositioning = respectAgentPositioning, isAutoScrollEnabled = isAutoScrollEnabled,
                                         displayedCurrentLineIndex = deferredCurrentLineIndex, romanizeAsMain = romanizeAsMain,
                                         enabledLanguages = enabledLanguages, romanizeLyrics = currentSong?.romanizeLyrics == true,
-                                        focusWordIndex = focusWordMap[index], mutedColor = if (isBlackhole) blackholeMutedColor else null,
-                                        highlightColor = if (isBlackhole) focusHighlightColor else null,
+                                        focusWordIndex = null, mutedColor = null,
+                                        highlightColor = null,
                                         onSizeChanged = { itemHeights[listIndex] = it },
                                         onClick = {
                                             if (isSelectionModeActive) {

@@ -107,6 +107,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.focus.FocusRequester
@@ -475,7 +476,10 @@ fun BottomSheetPlayer(
                 playerBackground == PlayerBackgroundStyle.GRADIENT -> {
                 when (playerButtonsStyle) {
                     PlayerButtonsStyle.DEFAULT -> {
-                        Pair(Color.White, Color.Black)
+                        Pair(
+                            if (useDarkTheme) Color.White else Color.Black,
+                            if (useDarkTheme) Color.Black else Color.White,
+                        )
                     }
 
                     PlayerButtonsStyle.PRIMARY -> {
@@ -528,9 +532,10 @@ fun BottomSheetPlayer(
                 playerBackground == PlayerBackgroundStyle.GRADIENT -> {
                 when (playerButtonsStyle) {
                     PlayerButtonsStyle.DEFAULT -> {
+                        val sideColor = if (useDarkTheme) Color.White else Color.Black
                         Pair(
-                            Color.White.copy(alpha = 0.2f),
-                            Color.White,
+                            sideColor.copy(alpha = 0.2f),
+                            sideColor,
                         )
                     }
 
@@ -867,18 +872,19 @@ fun BottomSheetPlayer(
                             label = "gradientBackground",
                         ) { colors ->
                             if (colors.isNotEmpty()) {
+                                val endColor = if (useDarkTheme) Color.Black else Color.White
                                 val gradientColorStops =
                                     if (colors.size >= 3) {
                                         arrayOf(
                                             0.0f to colors[0],
                                             0.5f to colors[1],
-                                            1.0f to colors[2],
+                                            1.0f to endColor,
                                         )
                                     } else {
                                         arrayOf(
                                             0.0f to colors[0],
                                             0.6f to colors[0].copy(alpha = 0.7f),
-                                            1.0f to Color.Black,
+                                            1.0f to endColor,
                                         )
                                     }
                                 Box(
@@ -886,7 +892,10 @@ fun BottomSheetPlayer(
                                         .fillMaxSize()
                                         .alpha(backgroundAlpha)
                                         .background(Brush.verticalGradient(colorStops = gradientColorStops))
-                                        .background(Color.Black.copy(alpha = 0.2f)),
+                                        .background(
+                                            if (useDarkTheme) Color.Black.copy(alpha = 0.2f)
+                                            else Color.Transparent
+                                        ),
                                 )
                             }
                         }
@@ -984,7 +993,9 @@ fun BottomSheetPlayer(
                     ) { title ->
                         Text(
                             text = title,
-                            style = themeConfig.songTitleStyle,
+                            style = if (useDarkTheme) themeConfig.songTitleStyle else themeConfig.songTitleStyle.copy(
+                                shadow = Shadow(Color.Black, Offset.Zero, 8f),
+                            ),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             color = TextBackgroundColor,
@@ -1027,7 +1038,11 @@ fun BottomSheetPlayer(
                                     mediaMetadata.artists.forEachIndexed { index, artist ->
                                         val tag = "artist_${artist.id.orEmpty()}"
                                         pushStringAnnotation(tag = tag, annotation = artist.id.orEmpty())
-                                        withStyle(SpanStyle(color = TextBackgroundColor, fontSize = themeConfig.artistStyle.fontSize)) {
+                                        withStyle(SpanStyle(
+                                            color = TextBackgroundColor,
+                                            fontSize = themeConfig.artistStyle.fontSize,
+                                            shadow = if (useDarkTheme) null else Shadow(Color.Black, Offset.Zero, 8f),
+                                        )) {
                                             append(artist.name)
                                         }
                                         pop()
@@ -1046,7 +1061,10 @@ fun BottomSheetPlayer(
                                 var clickOffset by remember { mutableStateOf<Offset?>(null) }
                                 Text(
                                     text = annotatedString,
-                                    style = MaterialTheme.typography.titleMedium.copy(color = TextBackgroundColor),
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        color = TextBackgroundColor,
+                                        shadow = if (useDarkTheme) null else Shadow(Color.Black, Offset.Zero, 8f),
+                                    ),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                     onTextLayout = { layoutResult = it },
@@ -1859,6 +1877,7 @@ fun BottomSheetPlayer(
                                         mediaMetadata = mediaMetadata,
                                         showLyrics = showLyrics,
                                         positionProvider = { effectivePosition },
+                                        useDarkTheme = useDarkTheme,
                                     )
                                 } else {
                                     Thumbnail(
@@ -1969,6 +1988,7 @@ fun BottomSheetPlayer(
                                         mediaMetadata = mediaMetadata,
                                         showLyrics = showLyrics,
                                         positionProvider = { effectivePosition },
+                                        useDarkTheme = useDarkTheme,
                                     )
                                 } else {
                                     Thumbnail(
@@ -2034,6 +2054,7 @@ fun BottomSheetPlayer(
                 iconButtonColor = iconButtonColor,
                 pureBlack = pureBlack,
                 showInlineLyrics = showInlineLyrics,
+                useDarkTheme = useDarkTheme,
                 playerBackground = playerBackground,
                 onToggleLyrics = {
                     showInlineLyrics = !showInlineLyrics
@@ -2049,6 +2070,7 @@ fun InlineLyricsView(
     mediaMetadata: MediaMetadata?,
     showLyrics: Boolean,
     positionProvider: () -> Long,
+    useDarkTheme: Boolean = true,
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
     val currentLyrics by playerConnection.currentLyrics.collectAsStateWithLifecycle(initialValue = null)
@@ -2178,6 +2200,7 @@ fun InlineLyricsView(
                             fontSize = 16.sp,
                             textAlign = TextAlign.Center,
                             lineHeight = 28.sp,
+                            shadow = if (useDarkTheme) null else Shadow(Color.Black, Offset.Zero, 8f),
                         ),
                 ) {
                     lyricsContent()

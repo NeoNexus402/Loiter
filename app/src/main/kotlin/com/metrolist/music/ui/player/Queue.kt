@@ -161,6 +161,7 @@ fun Queue(
     showInlineLyrics: Boolean,
     playerBackground: PlayerBackgroundStyle = PlayerBackgroundStyle.DEFAULT,
     onToggleLyrics: () -> Unit = {},
+    useDarkTheme: Boolean = true,
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
@@ -312,6 +313,7 @@ fun Queue(
                         iconSize = iconSize,
                         textBackgroundColor = TextBackgroundColor,
                         playerBackground = playerBackground,
+                        useDarkTheme = useDarkTheme,
                     )
 
                     PlayerQueueButton(
@@ -333,6 +335,7 @@ fun Queue(
                         iconSize = iconSize,
                         textBackgroundColor = TextBackgroundColor,
                         playerBackground = playerBackground,
+                        useDarkTheme = useDarkTheme,
                     )
 
                     val shuffleModeEnabled by playerConnection.shuffleModeEnabled.collectAsStateWithLifecycle()
@@ -350,6 +353,7 @@ fun Queue(
                         iconSize = iconSize,
                         textBackgroundColor = TextBackgroundColor,
                         playerBackground = playerBackground,
+                        useDarkTheme = useDarkTheme,
                     )
 
                     PlayerQueueButton(
@@ -363,6 +367,7 @@ fun Queue(
                         iconSize = iconSize,
                         textBackgroundColor = TextBackgroundColor,
                         playerBackground = playerBackground,
+                        useDarkTheme = useDarkTheme,
                     )
 
                     PlayerQueueButton(
@@ -384,6 +389,7 @@ fun Queue(
                         iconSize = iconSize,
                         textBackgroundColor = TextBackgroundColor,
                         playerBackground = playerBackground,
+                        useDarkTheme = useDarkTheme,
                     )
 
                     Spacer(modifier = Modifier.weight(1f))
@@ -423,6 +429,10 @@ fun Queue(
                 }
             } else {
                 // Old design
+                val bottomBarColor = when (playerBackground) {
+                    PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT -> if (useDarkTheme) Color.White else Color.Black
+                    PlayerBackgroundStyle.DEFAULT -> TextBackgroundColor
+                }
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
@@ -443,17 +453,17 @@ fun Queue(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center,
                             modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.queue_music),
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp),
-                                tint = TextBackgroundColor,
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = stringResource(id = R.string.queue),
-                                color = TextBackgroundColor,
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.queue_music),
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = bottomBarColor,
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = stringResource(id = R.string.queue),
+                            color = bottomBarColor,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 textAlign = TextAlign.Center,
@@ -484,7 +494,7 @@ fun Queue(
                                 painter = painterResource(id = R.drawable.bedtime),
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp),
-                                tint = TextBackgroundColor,
+                                tint = bottomBarColor,
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             AnimatedContent(
@@ -494,7 +504,7 @@ fun Queue(
                                 if (enabled) {
                                     Text(
                                         text = makeTimeString(sleepTimerTimeLeft),
-                                        color = TextBackgroundColor,
+                                        color = bottomBarColor,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                         textAlign = TextAlign.Center,
@@ -504,7 +514,7 @@ fun Queue(
                                 } else {
                                     Text(
                                         text = stringResource(id = R.string.sleep_timer),
-                                        color = TextBackgroundColor,
+                                        color = bottomBarColor,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                         textAlign = TextAlign.Center,
@@ -531,12 +541,12 @@ fun Queue(
                                 painter = painterResource(id = R.drawable.lyrics),
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp),
-                                tint = TextBackgroundColor,
+                                tint = bottomBarColor,
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = stringResource(R.string.lyrics),
-                                color = TextBackgroundColor,
+                                color = bottomBarColor,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 textAlign = TextAlign.Center,
@@ -1292,6 +1302,7 @@ private fun PlayerQueueButton(
     iconSize: androidx.compose.ui.unit.Dp,
     textBackgroundColor: Color,
     playerBackground: PlayerBackgroundStyle,
+    useDarkTheme: Boolean = true,
 ) {
     val buttonModifier =
         Modifier
@@ -1338,7 +1349,7 @@ private fun PlayerQueueButton(
                 } else {
                     when (playerBackground) {
                         PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT -> {
-                            Color.White
+                            if (useDarkTheme) Color.White else Color.Black
                         }
 
                         PlayerBackgroundStyle.DEFAULT -> {

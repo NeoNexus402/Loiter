@@ -44,7 +44,7 @@
     <td width="50%" valign="top">
 
 ### Layout Themes
-- **Loiter** — Coming Soon
+- **Loiter** — Default theme with dynamic accent color from album art
 - **YouTube Music** — Coming Soon
 - **Spotify** — Coming Soon
 - **Blackhole** — Inspired by Blackhole.
@@ -152,6 +152,7 @@
     <td width="50%" valign="top">
 
 - **Gradient Player Backgrounds** — Album art-driven gradient backgrounds on supported themes
+- **Real-time Audio Visualizer** — FFT-based spectrum analyzer in the player, built on ExoPlayer's AudioProcessor pipeline
 - **Album Art Border** — Toggle borders around album artwork
 - **M3 Expressive Migration** — Progressive adoption of Material 3 Expressive design patterns
 
@@ -247,6 +248,10 @@
     <tr>
       <td><a href="https://github.com/aleksey-saenko/MusicRecognizer"><strong>MusicRecognizer</strong></a></td>
       <td>Music recognition feature & Shazam API integration</td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/dzolnai/ExoVisualizer"><strong>ExoVisualizer</strong></a></td>
+      <td>Audio visualizer approach using ExoPlayer AudioProcessor + FFT</td>
     </tr>
   </tbody>
 </table>

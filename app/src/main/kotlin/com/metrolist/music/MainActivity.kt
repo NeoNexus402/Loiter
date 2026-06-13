@@ -534,7 +534,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        val currentLayoutThemeRaw by rememberEnumPreference(LayoutThemeKey, defaultValue = LayoutTheme.METROLIST)
+        val currentLayoutThemeRaw by rememberEnumPreference(LayoutThemeKey, defaultValue = LayoutTheme.LOITER)
         val currentLayoutTheme = currentLayoutThemeRaw
         val (blackholeSeedColorInt) = rememberPreference(BlackholeColorKey, defaultValue = Color(0xFF1DB954).toArgb())
         val blackholeSeedColor = remember(blackholeSeedColorInt) { Color(blackholeSeedColorInt) }
@@ -1062,6 +1062,14 @@ class MainActivity : ComponentActivity() {
                                                     painter = painterResource(R.drawable.stats),
                                                     contentDescription = stringResource(R.string.stats),
                                                 )
+                                            }
+                                            if (currentLayoutTheme != LayoutTheme.LOITER) {
+                                                IconButton(onClick = { navController.navigate("settings") }) {
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.settings),
+                                                        contentDescription = stringResource(R.string.settings),
+                                                    )
+                                                }
                                             }
                                             if (listenTogetherInTopBar) {
                                                 IconButton(onClick = { navController.navigate("listen_together_from_topbar") }) {

@@ -555,7 +555,7 @@ fun LoiterHomeScreen(
                     val title = rec.title
                     if (title != null && !rec.items.isNullOrEmpty()) {
                         item(key = "sr_title_$idx") {
-                            NavigationTitle(title = "Similar to $title")
+                            NavigationTitle(title = "Similar to ${title.title}")
                         }
                         item(key = "sr_content_$idx") {
                             LazyRow(
@@ -705,21 +705,8 @@ private fun SpeedDialSection(
                     Row(modifier = Modifier.fillMaxWidth()) {
                         for (col in 0 until columns) {
                             val itemIndex = row * columns + col
-                            val isRandomizeSlot = (page == 0 && itemIndex == itemsPerPage - 1)
 
-                            if (isRandomizeSlot) {
-                                Box(
-                                    modifier = Modifier
-                                        .width(itemWidth)
-                                        .height(itemWidth)
-                                        .padding(4.dp),
-                                ) {
-                                    RandomizeGridItem(
-                                        isLoading = false,
-                                        onClick = { },
-                                    )
-                                }
-                            } else if (itemIndex < pageItems.size) {
+                            if (itemIndex < pageItems.size) {
                                 val item = pageItems[itemIndex]
                                 Box(
                                     modifier = Modifier

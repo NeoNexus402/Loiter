@@ -131,7 +131,7 @@ fun AppNavigationRail(
                 }
             }
 
-            val navAccentColor = themeConfig.effectiveAccentColor ?: MaterialTheme.colorScheme.primary
+            val navAccentColor = LocalDynamicAccentColor.current
             val railColors = NavigationRailItemDefaults.colors(
                 indicatorColor = navAccentColor.copy(alpha = 0.15f),
                 selectedIconColor = navAccentColor,
@@ -223,7 +223,7 @@ fun AppNavigationBar(
                 }
             }
 
-            val navAccentColor = themeConfig.effectiveAccentColor ?: MaterialTheme.colorScheme.primary
+            val navAccentColor = LocalDynamicAccentColor.current
             val itemColors = NavigationBarItemDefaults.colors(
                 indicatorColor = navAccentColor.copy(alpha = 0.15f),
                 selectedIconColor = navAccentColor,

@@ -161,7 +161,7 @@ fun AppearanceSettings(
     // Check if user has selected a custom color (not the default/dynamic color)
     val isUsingCustomColor = selectedThemeColorInt != DefaultThemeColor.toArgb()
     val (currentLayoutThemeRaw, onLayoutThemeChange) =
-        rememberEnumPreference(LayoutThemeKey, defaultValue = LayoutTheme.METROLIST)
+        rememberEnumPreference(LayoutThemeKey, defaultValue = LayoutTheme.LOITER)
     val currentLayoutTheme = currentLayoutThemeRaw
     val (blackholeSeedColorInt, onBlackholeSeedColorChange) = rememberPreference(
         BlackholeColorKey, defaultValue = Color(0xFF1DB954).toArgb(),

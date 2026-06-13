@@ -437,14 +437,6 @@ fun OriginalLyrics(
         }
 
     val layoutThemeConfig = LocalLayoutThemeConfig.current
-    val isBlackhole = layoutThemeConfig.theme == LayoutTheme.BLACKHOLE
-    val focusWordMap = remember(lines, isBlackhole) {
-        if (isBlackhole) selectFocusWords(lines) else emptyMap()
-    }
-    val blackholeMutedColor = remember { Color(0xFF757575) }
-    val focusHighlightColor = remember(layoutThemeConfig, expressiveAccent) {
-        layoutThemeConfig.effectiveAccentColor ?: expressiveAccent
-    }
 
     var currentLineIndex by remember {
         mutableIntStateOf(-1)
@@ -1107,37 +1099,7 @@ fun OriginalLyrics(
                             val hasWordTimings = if (romanizeAsMain && isRomanizedAvailable) false else item.words?.isNotEmpty() == true
 
                             // Word-by-word animation styles
-                            if (isBlackhole) {
-                                val focusIdx = focusWordMap[index]
-                                val textColor = if (isActiveLine) 1f else 0.6f
-                                if (focusIdx != null) {
-                                    val styledText = buildAnnotatedString {
-                                        val words = mainText.split(Regex("\\s+")).filter { it.isNotBlank() }
-                                        words.forEachIndexed { i, w ->
-                                            val isFocus = i == focusIdx
-                                            val baseColor = if (isFocus) focusHighlightColor else blackholeMutedColor
-                                            withStyle(SpanStyle(color = baseColor.copy(alpha = textColor))) { append(w) }
-                                            if (i < words.lastIndex) append(" ")
-                                        }
-                                    }
-                                    Text(
-                                        text = styledText,
-                                        fontSize = lyricsTextSize.sp,
-                                        textAlign = alignment,
-                                        lineHeight = (lyricsTextSize * lyricsLineSpacing).sp,
-                                        fontWeight = if (isActiveLine) FontWeight.ExtraBold else FontWeight.Bold,
-                                    )
-                                } else {
-                                    Text(
-                                        text = mainText,
-                                        fontSize = lyricsTextSize.sp,
-                                        color = blackholeMutedColor.copy(alpha = textColor),
-                                        textAlign = alignment,
-                                        fontWeight = if (isActiveLine) FontWeight.ExtraBold else FontWeight.Bold,
-                                        lineHeight = (lyricsTextSize * lyricsLineSpacing).sp,
-                                    )
-                                }
-                            } else if (hasWordTimings && lyricsAnimationStyle == LyricsAnimationStyle.NONE) {
+                            if (hasWordTimings && lyricsAnimationStyle == LyricsAnimationStyle.NONE) {
                                 val styledText =
                                     buildAnnotatedString {
                                         item.words?.forEachIndexed { wordIndex, word ->
