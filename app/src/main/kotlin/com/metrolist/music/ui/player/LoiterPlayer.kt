@@ -128,11 +128,15 @@ fun LoiterPlayerContent(
 
     LaunchedEffect(Unit) {
         while (true) {
-            duration = playerConnection.player.duration
-            if (sliderPosition == null) {
-                position = playerConnection.player.currentPosition
+            if (isPlaying) {
+                duration = playerConnection.player.duration
+                if (sliderPosition == null) {
+                    position = playerConnection.player.currentPosition
+                }
+                delay(16)
+            } else {
+                delay(1000)
             }
-            delay(16)
         }
     }
 

@@ -40,6 +40,12 @@ class VisualizerAudioProcessor : AudioProcessor {
     private val smoothedBars = FloatArray(16)
     private val peakDecay = FloatArray(16) { 1e-4f }
 
+    private val window = FloatArray(FFT_SIZE) { i ->
+        0.5f * (1f - cos(2f * PI.toFloat() * i / (FFT_SIZE - 1)))
+    }
+
+    private val barsList = MutableList(16) { 0f }
+
     private val _bars = MutableStateFlow(List(16) { 0f })
     val bars: StateFlow<List<Float>> = _bars.asStateFlow()
 
@@ -97,8 +103,7 @@ class VisualizerAudioProcessor : AudioProcessor {
         if (nyquist == 0) return
 
         for (i in 0 until FFT_SIZE) {
-            val window = 0.5f * (1f - cos(2f * PI.toFloat() * i / (FFT_SIZE - 1)))
-            real[i] = pcmBuffer[i].toFloat() / 32768f * window
+            real[i] = pcmBuffer[i].toFloat() / 32768f * window[i]
             imag[i] = 0f
         }
 
@@ -136,7 +141,8 @@ class VisualizerAudioProcessor : AudioProcessor {
                 smoothedBars[band] * SMOOTHING + normalized * (1f - SMOOTHING)
         }
 
-        _bars.value = smoothedBars.toList()
+        for (i in 0 until 16) barsList[i] = smoothedBars[i]
+        _bars.value = barsList.toList()
     }
 
     private fun doFft(r: FloatArray, i: FloatArray) {
