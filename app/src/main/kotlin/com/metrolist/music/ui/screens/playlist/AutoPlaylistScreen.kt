@@ -287,13 +287,26 @@ fun AutoPlaylistScreen(
                                     return@forEachIndexed
                                 }
 
-                                val inputStream = context.contentResolver.openInputStream(uri)
-                                val data = inputStream?.readBytes()
-                                inputStream?.close()
+                                val contentLength = context.contentResolver.query(uri, null, null, null, null)?.use {
+                                    it.moveToFirst()
+                                    it.getColumnIndex(OpenableColumns.SIZE).let { sizeIndex ->
+                                        if (sizeIndex >= 0 && !it.isNull(sizeIndex)) it.getLong(sizeIndex) else -1L
+                                    }
+                                } ?: -1L
 
-                                if (data == null) return@forEachIndexed
+                                if (contentLength <= 0L) {
+                                    withContext(Dispatchers.Main) {
+                                        Toast
+                                            .makeText(
+                                                context,
+                                                uploadFileTooLargeStr,
+                                                Toast.LENGTH_SHORT,
+                                            ).show()
+                                    }
+                                    return@forEachIndexed
+                                }
 
-                                if (data.size > YouTube.MAX_UPLOAD_SIZE) {
+                                if (contentLength > YouTube.MAX_UPLOAD_SIZE) {
                                     withContext(Dispatchers.Main) {
                                         Toast
                                             .makeText(
@@ -308,7 +321,10 @@ fun AutoPlaylistScreen(
                                 val result =
                                     YouTube.uploadSong(
                                         filename = fileName,
-                                        data = data,
+                                        contentLength = contentLength,
+                                        content = {
+                                            checkNotNull(context.contentResolver.openInputStream(uri))
+                                        },
                                         onProgress = { progress ->
                                             uploadProgress = progress
                                         },

@@ -31,12 +31,13 @@ import com.metrolist.music.di.ApplicationScope
 import com.metrolist.music.extensions.toEnum
 import com.metrolist.music.extensions.toInetSocketAddress
 import com.metrolist.music.utils.CrashHandler
-import com.metrolist.music.utils.cipher.CipherDeobfuscator
+import com.metrolist.music.utils.InnerTubeXPlayer
 import com.metrolist.music.utils.dataStore
 import com.metrolist.music.utils.reportException
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -77,8 +78,8 @@ class App :
             Timber.e(e, "Failed to ensure DataStore directory")
         }
 
-        // Initialize cipher deobfuscator for WEB_REMIX streaming
-        CipherDeobfuscator.initialize(this)
+        // Initialize InnerTubeXPlayer for stream extraction
+        InnerTubeXPlayer.initialize(this)
 
         Timber.plant(Timber.DebugTree())
 
@@ -90,6 +91,18 @@ class App :
         // تهيئة إعدادات التطبيق عند الإقلاع
         applicationScope.launch {
             initializeSettings()
+
+            // Warm player config, cipher, and optional PO-token state off the first-play path.
+            launch(Dispatchers.IO) {
+                delay(2500)
+                var waitedMs = 0
+                while (YouTube.visitorData == null && waitedMs < 12_000) {
+                    delay(500)
+                    waitedMs += 500
+                }
+                runCatching { InnerTubeXPlayer.prewarm() }
+            }
+
             observeSettingsChanges()
         }
     }

@@ -593,6 +593,9 @@ class PlayerConnection(
     ) {
         mediaMetadata.value = mediaItem?.metadata
         currentMediaItemIndex.value = player.currentMediaItemIndex
+        // Re-anchor the queue on the freshly started media item so UI (e.g. the
+        // "Up next" preview) reflects the upcoming tracks after every skip.
+        queueWindows.value = player.getQueueWindows()
         currentWindowIndex.value = player.getCurrentQueueIndex()
         updateCanSkipPreviousAndNext()
     }

@@ -1,6 +1,8 @@
 package com.metrolist.music.ui.theme
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.structuralEqualityPolicy
 import androidx.compose.ui.graphics.Color
@@ -76,6 +78,20 @@ data class LayoutThemeConfig(
 
 val LocalLayoutTheme = compositionLocalOf(structuralEqualityPolicy()) { LayoutTheme.METROLIST }
 val LocalLayoutThemeConfig = compositionLocalOf(structuralEqualityPolicy()) { metrolistThemeConfig }
+
+/**
+ * Resolves the accent color used by menus and settings groups.
+ * Loiter carries the dynamic album-art-derived accent into these surfaces,
+ * while other themes use their static accent/seed color or the Material primary.
+ */
+@Composable
+fun localThemeAccentColor(): Color {
+    return if (LocalLayoutTheme.current == LayoutTheme.LOITER) {
+        LocalDynamicAccentColor.current
+    } else {
+        LocalLayoutThemeConfig.current.effectiveAccentColor ?: MaterialTheme.colorScheme.primary
+    }
+}
 
 private val loiterPlayerTitleStyle = TextStyle(
     fontWeight = FontWeight.Normal,
