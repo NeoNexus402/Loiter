@@ -73,6 +73,7 @@ import androidx.media3.exoplayer.source.ShuffleOrder.DefaultShuffleOrder
 import androidx.media3.extractor.ExtractorsFactory
 import androidx.media3.extractor.mkv.MatroskaExtractor
 import androidx.media3.extractor.mp4.FragmentedMp4Extractor
+import androidx.media3.extractor.mp4.Mp4Extractor
 import androidx.media3.session.CommandButton
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaController
@@ -144,6 +145,7 @@ import com.metrolist.music.constants.SimilarContent
 import com.metrolist.music.constants.SkipSilenceInstantKey
 import com.metrolist.music.constants.SkipSilenceKey
 import com.metrolist.music.constants.StopMusicOnTaskClearKey
+import com.metrolist.music.constants.VisualizerEnabledKey
 import com.metrolist.music.db.MusicDatabase
 import com.metrolist.music.db.entities.Event
 import com.metrolist.music.db.entities.FormatEntity
@@ -190,10 +192,11 @@ import com.metrolist.music.utils.DiscordRPC
 import com.metrolist.music.utils.NetworkConnectivityObserver
 import com.metrolist.music.utils.ScrobbleManager
 import com.metrolist.music.utils.SyncUtils
-import com.metrolist.music.utils.YTPlayerUtils
 import com.metrolist.music.utils.dataStore
 import com.metrolist.music.utils.get
 import com.metrolist.music.utils.reportException
+import com.metrolist.innertubex.extraction.ContentHints
+import com.metrolist.music.utils.InnerTubeXPlayer
 import com.metrolist.music.widget.MetrolistWidgetManager
 import com.metrolist.music.widget.MusicWidgetReceiver
 import com.metrolist.music.widget.PlaylistWidgetReceiver
@@ -306,6 +309,7 @@ class MusicService :
     lateinit var connectivityObserver: NetworkConnectivityObserver
     val waitingForNetworkConnection = MutableStateFlow(false)
     private val isNetworkConnected = MutableStateFlow(false)
+    val currentStreamClient = MutableStateFlow<String?>(null)
 
     private lateinit var audioQuality: com.metrolist.music.constants.AudioQuality
 
@@ -438,9 +442,23 @@ class MusicService :
     private var cachedAutoLoadMore = true
 
     // URL cache for stream URLs - class-level so it can be invalidated on errors
-    private val songUrlCache = Collections.synchronizedMap(
-        object : LinkedHashMap<String, Pair<String, Long>>(0, 0.75f, true) {
-            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Pair<String, Long>>): Boolean {
+    private val songUrlCache = StreamUrlCache()
+
+    // Tracks mediaIds for which a recoverSong() coroutine is currently in flight.
+    // resolveDataSpec() calls recoverSong() on every dataSpec/chunk resolution, so
+    // this guard keeps at most one recoverSong() in flight per song.
+    private val recoveringSongs = Collections.synchronizedSet(mutableSetOf<String>())
+
+    private val sessionKey
+        get() = YouTube.dataSyncId.takeIf { !it.isNullOrBlank() }
+            ?: YouTube.visitorData.takeIf { !it.isNullOrBlank() }
+            ?: ""
+
+    private fun cacheKey(mediaId: String) = "${sessionKey}:$mediaId"
+
+    private val playbackUrlCache = Collections.synchronizedMap(
+        object : LinkedHashMap<String, String>(0, 0.75f, true) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>): Boolean {
                 return size > 500
             }
         }
@@ -645,7 +663,11 @@ class MusicService :
 
         audioManager.registerAudioDeviceCallback(audioDeviceCallback, null)
 
-        audioQuality = dataStore.get(AudioQualityKey).toEnum(com.metrolist.music.constants.AudioQuality.AUTO)
+        audioQuality =
+            when (val stored = dataStore.get(AudioQualityKey)) {
+                "VERY_HIGH" -> com.metrolist.music.constants.AudioQuality.HIGH
+                else -> stored.toEnum(com.metrolist.music.constants.AudioQuality.AUTO)
+            }
         playerVolume = MutableStateFlow(dataStore.get(PlayerVolumeKey, 1f).coerceIn(0f, 1f))
 
         // Initialize Google Cast
@@ -699,8 +721,9 @@ class MusicService :
             dataStore.data
                 .map {
                     it[AudioQualityKey]?.let { value ->
+                        val normalized = if (value == "VERY_HIGH") "HIGH" else value
                         com.metrolist.music.constants.AudioQuality.entries
-                            .find { it.name == value }
+                            .find { it.name == normalized }
                     } ?: com.metrolist.music.constants.AudioQuality.AUTO
                 }.distinctUntilChanged()
                 .collect { newQuality ->
@@ -725,7 +748,7 @@ class MusicService :
                     Timber.tag("MusicService").i("RELOADING STREAM: $mediaId at position ${currentPosition}ms")
 
                     // Clear cached URL to force fresh fetch
-                    songUrlCache.remove(mediaId)
+                    songUrlCache.invalidate(mediaId)
 
                     // CRITICAL: Clear caches synchronously to prevent format parsing errors
                     runBlocking(Dispatchers.IO) {
@@ -986,6 +1009,11 @@ class MusicService :
         }
         scope.launch {
             dataStore.data.map { it[AutoLoadMoreKey] ?: true }.distinctUntilChanged().collect { cachedAutoLoadMore = it }
+        }
+        scope.launch {
+            dataStore.data.map { it[VisualizerEnabledKey] ?: true }.distinctUntilChanged().collect { visualizerEnabled ->
+                visualizerProcessor.enabled = visualizerEnabled
+            }
         }
 
         if (dataStore.get(PersistentQueueKey, true)) {
@@ -1401,40 +1429,49 @@ class MusicService :
 
     private suspend fun recoverSong(
         mediaId: String,
-        playbackData: YTPlayerUtils.PlaybackData? = null,
+        playbackData: InnerTubeXPlayer.PlaybackData? = null,
     ) {
         val song = database.song(mediaId).first()
         val mediaMetadata =
             withContext(Dispatchers.Main) {
                 player.findNextMediaItemById(mediaId)?.metadata
-            } ?: return
+                    ?: secondaryPlayer?.findNextMediaItemById(mediaId)?.metadata
+                    ?: fadingPlayer?.findNextMediaItemById(mediaId)?.metadata
+            }
+
+        if (mediaMetadata == null && song == null) return
+
         val duration =
             song?.song?.duration?.takeIf { it != -1 }
-                ?: mediaMetadata.duration.takeIf { it != -1 }
+                ?: mediaMetadata?.duration?.takeIf { it != -1 }
                 ?: (
-                    playbackData?.videoDetails ?: YTPlayerUtils
-                        .playerResponseForMetadata(mediaId)
-                        .getOrNull()
-                        ?.videoDetails
+                    playbackData?.videoDetails
                 )?.lengthSeconds?.toInt()
                 ?: -1
+
         database.query {
-            if (song == null) {
+            if (mediaMetadata != null && (song == null || song.orderedArtists.isEmpty())) {
                 insert(mediaMetadata.copy(duration = duration))
-            } else {
+            }
+            if (song != null) {
                 var updatedSong = song.song
                 if (song.song.duration == -1) {
                     updatedSong = updatedSong.copy(duration = duration)
                 }
-                // Update isVideo flag if it's different from the current value
-                if (song.song.isVideo != mediaMetadata.isVideoSong) {
+                if (mediaMetadata != null && song.song.isVideo != mediaMetadata.isVideoSong) {
                     updatedSong = updatedSong.copy(isVideo = mediaMetadata.isVideoSong)
+                }
+                val fetchedThumbnail = mediaMetadata?.thumbnailUrl
+                    ?: playbackData?.videoDetails?.thumbnail?.thumbnails?.lastOrNull()?.url
+                if (updatedSong.thumbnailUrl.isNullOrBlank() && !fetchedThumbnail.isNullOrBlank()) {
+                    updatedSong = updatedSong.copy(thumbnailUrl = fetchedThumbnail)
                 }
                 if (updatedSong != song.song) {
                     update(updatedSong)
                 }
             }
         }
+
         if (!database.hasRelatedSongs(mediaId)) {
             val relatedEndpoint =
                 YouTube.next(WatchEndpoint(videoId = mediaId)).getOrNull()?.relatedEndpoint
@@ -1450,6 +1487,24 @@ class MusicService :
                             relatedSongId = it.id,
                         )
                     }.forEach(::insert)
+            }
+        }
+    }
+
+    /**
+     * Launches [recoverSong] for [mediaId] unless a call for the same mediaId is
+     * already in flight, in which case this is a no-op.
+     */
+    private fun recoverSongDeduped(
+        mediaId: String,
+        playbackData: InnerTubeXPlayer.PlaybackData? = null,
+    ) {
+        if (!recoveringSongs.add(mediaId)) return
+        scope.launch(Dispatchers.IO) {
+            try {
+                recoverSong(mediaId, playbackData)
+            } finally {
+                recoveringSongs.remove(mediaId)
             }
         }
     }
@@ -2806,7 +2861,7 @@ class MusicService :
         Timber.tag(TAG).d("Performing aggressive cache clear for $mediaId")
 
         // Clear URL cache
-        songUrlCache.remove(mediaId)
+        songUrlCache.invalidate(mediaId)
 
         // Clear player cache
         try {
@@ -2814,14 +2869,6 @@ class MusicService :
             Timber.tag(TAG).d("Cleared player cache for $mediaId")
         } catch (e: Exception) {
             Timber.tag(TAG).e(e, "Failed to clear player cache for $mediaId")
-        }
-
-        // Clear decryption caches
-        try {
-            YTPlayerUtils.forceRefreshForVideo(mediaId)
-            Timber.tag(TAG).d("Cleared decryption caches for $mediaId")
-        } catch (e: Exception) {
-            Timber.tag(TAG).e(e, "Failed to clear decryption caches for $mediaId")
         }
     }
 
@@ -3000,16 +3047,12 @@ class MusicService :
 
         incrementRetryCount(mediaId)
 
-        // Clear the cached URL
-        songUrlCache.remove(mediaId)
-        Timber.tag(TAG).d("Cleared cached URL for $mediaId")
-
-        // Clear decryption caches
-        try {
-            YTPlayerUtils.forceRefreshForVideo(mediaId)
-        } catch (e: Exception) {
-            Timber.tag(TAG).e(e, "Failed to clear decryption caches")
-        }
+        // Invalidate the cached URL and exclude the failing stream client so the
+        // next resolution can fall back to a different client for this mediaId.
+        val failedStreamClient = songUrlCache.clientName(mediaId)
+        songUrlCache.invalidate(mediaId)
+        failedStreamClient?.let { InnerTubeXPlayer.markStreamClientFailed(mediaId, it) }
+        Timber.tag(TAG).d("Cleared cached URL for $mediaId (client=$failedStreamClient)")
 
         retryJob?.cancel()
         retryJob =
@@ -3342,37 +3385,54 @@ class MusicService :
         return ResolvingDataSource.Factory(createCacheDataSource()) { dataSpec ->
             val mediaId = dataSpec.key ?: error("No media id")
 
-            // Check if we need to bypass cache for quality change
             val shouldBypassCache = bypassCacheForQualityChange.contains(mediaId)
 
             if (!shouldBypassCache) {
                 val usePlayerCache = dataStore.get(EnableSongCacheKey, true)
-                if (downloadCache.isCached(
-                        mediaId,
-                        dataSpec.position,
-                        if (dataSpec.length >= 0) dataSpec.length else 1,
-                    ) ||
-                    (usePlayerCache && playerCache.isCached(mediaId, dataSpec.position, CHUNK_LENGTH))
-                ) {
-                    scope.launch(Dispatchers.IO) { recoverSong(mediaId) }
+
+                val contentLength =
+                    runBlocking(Dispatchers.IO) {
+                        database.song(mediaId).first()?.format?.contentLength
+                    }
+                val requiredLength =
+                    when {
+                        dataSpec.length >= 0 -> dataSpec.length
+                        contentLength != null -> (contentLength - dataSpec.position).coerceAtLeast(1)
+                        else -> CHUNK_LENGTH // contentLength unknown yet — fall back to old probe size
+                    }
+
+                if (downloadCache.isCached(mediaId, dataSpec.position, requiredLength)) {
+                    recoverSongDeduped(mediaId)
                     return@Factory dataSpec
                 }
 
-                songUrlCache[mediaId]?.takeIf { it.second > System.currentTimeMillis() }?.let {
-                    scope.launch(Dispatchers.IO) { recoverSong(mediaId) }
-                    return@Factory dataSpec.withUri(it.first.toUri())
+                if (usePlayerCache && playerCache.isCached(mediaId, dataSpec.position, requiredLength)) {
+                    recoverSongDeduped(mediaId)
+                    return@Factory dataSpec
+                }
+
+                songUrlCache[mediaId]?.let { cachedStream ->
+                    recoverSongDeduped(mediaId)
+                    currentStreamClient.value = cachedStream.clientName
+                    return@Factory dataSpec.withResolvedStream(cachedStream)
                 }
             } else {
-                Timber.tag("MusicService").i("BYPASSING CACHE for $mediaId due to quality change")
+                Timber.tag(TAG).i("BYPASSING CACHE for $mediaId due to quality change")
             }
 
-            Timber.tag("MusicService").i("FETCHING STREAM: $mediaId | quality=$audioQuality")
+            val cacheGeneration = songUrlCache.generation(mediaId)
+            Timber.tag(TAG).i("FETCHING STREAM: $mediaId | quality=$audioQuality")
             val playbackData =
                 runBlocking(Dispatchers.IO) {
-                    YTPlayerUtils.playerResponseForPlayback(
+                    val song = database.song(mediaId).first()?.song
+                    InnerTubeXPlayer.playerResponseForPlayback(
                         mediaId,
                         audioQuality = audioQuality,
                         connectivityManager = connectivityManager,
+                        contentHints = ContentHints(
+                            isExplicit = song?.explicit,
+                            isUploaded = song?.isUploaded,
+                        ),
                     )
                 }.getOrElse { throwable ->
                     when (throwable) {
@@ -3410,47 +3470,75 @@ class MusicService :
                 requireNotNull(playbackData) {
                     getString(R.string.error_unknown)
                 }
-            run {
-                val format = nonNullPlayback.format
-                val loudnessDb = nonNullPlayback.audioConfig?.loudnessDb
-                val perceptualLoudnessDb = nonNullPlayback.audioConfig?.perceptualLoudnessDb
+            val format = nonNullPlayback.format
+            val loudnessDb = nonNullPlayback.audioConfig?.loudnessDb
+            val perceptualLoudnessDb = nonNullPlayback.audioConfig?.perceptualLoudnessDb
 
-                Timber
-                    .tag(TAG)
-                    .d("Storing format for $mediaId with loudnessDb: $loudnessDb, perceptualLoudnessDb: $perceptualLoudnessDb")
-                if (loudnessDb == null && perceptualLoudnessDb == null) {
-                    Timber.tag(TAG).w("No loudness data available from YouTube for video: $mediaId")
-                }
+            Timber
+                .tag(TAG)
+                .d("Storing format for $mediaId with loudnessDb: $loudnessDb, perceptualLoudnessDb: $perceptualLoudnessDb")
+            if (loudnessDb == null && perceptualLoudnessDb == null) {
+                Timber.tag(TAG).w("No loudness data available from YouTube for video: $mediaId")
+            }
 
+            format.contentLength?.let { contentLength ->
                 database.query {
                     upsert(
                         FormatEntity(
                             id = mediaId,
                             itag = format.itag,
-                            mimeType = format.mimeType.split(";")[0],
-                            codecs = format.mimeType.split("codecs=")[1].removeSurrounding("\""),
+                            mimeType = format.mimeType.substringBefore(";"),
+                            codecs =
+                                format.mimeType
+                                    .substringAfter("codecs=", missingDelimiterValue = "")
+                                    .substringBefore(";")
+                                    .trim()
+                                    .removeSurrounding("\""),
                             bitrate = format.bitrate,
                             sampleRate = format.audioSampleRate,
-                            contentLength = format.contentLength!!,
+                            contentLength = contentLength,
                             loudnessDb = loudnessDb,
                             perceptualLoudnessDb = perceptualLoudnessDb,
                             playbackUrl = nonNullPlayback.playbackTracking?.videostatsPlaybackUrl?.baseUrl,
                         ),
                     )
                 }
-                scope.launch(Dispatchers.IO) { recoverSong(mediaId, nonNullPlayback) }
+            } ?: Timber.tag(TAG).w("Skipping format persistence without content length for $mediaId")
+            recoverSongDeduped(mediaId, nonNullPlayback)
 
-                // Clear bypass flag now that we've fetched fresh stream
-                if (bypassCacheForQualityChange.remove(mediaId)) {
-                    Timber.tag("MusicService").d("Cleared bypass cache flag for $mediaId after fresh fetch")
-                }
-
-                val streamUrl = nonNullPlayback.streamUrl
-
-                songUrlCache[mediaId] =
-                    streamUrl to System.currentTimeMillis() + (nonNullPlayback.streamExpiresInSeconds * 1000L)
-                return@Factory dataSpec.withUri(streamUrl.toUri()).subrange(dataSpec.uriPositionOffset, CHUNK_LENGTH)
+            if (bypassCacheForQualityChange.remove(mediaId)) {
+                Timber.tag(TAG).d("Cleared bypass cache flag for $mediaId after fresh fetch")
             }
+
+            val streamUrl = nonNullPlayback.streamUrl
+            currentStreamClient.value = nonNullPlayback.streamClient
+
+            songUrlCache.put(
+                mediaId = mediaId,
+                url = streamUrl,
+                requestHeaders = nonNullPlayback.streamHeaders,
+                clientName = nonNullPlayback.streamClient,
+                expiresInSeconds = nonNullPlayback.streamExpiresInSeconds,
+                requireBoundedRange = nonNullPlayback.requireBoundedRange,
+                rangeChunkSizeBytes = nonNullPlayback.rangeChunkSizeBytes,
+                useRangeChunks = nonNullPlayback.useRangeChunks,
+                expectedGeneration = cacheGeneration,
+            )
+
+            nonNullPlayback.playbackTracking?.videostatsPlaybackUrl?.baseUrl?.let {
+                playbackUrlCache[cacheKey(mediaId)] = it
+            }
+
+            return@Factory dataSpec.withResolvedStream(
+                CachedStreamUrl(
+                    url = streamUrl,
+                    requestHeaders = nonNullPlayback.streamHeaders,
+                    clientName = nonNullPlayback.streamClient,
+                    requireBoundedRange = nonNullPlayback.requireBoundedRange,
+                    rangeChunkSizeBytes = nonNullPlayback.rangeChunkSizeBytes,
+                    useRangeChunks = nonNullPlayback.useRangeChunks,
+                ),
+            )
         }
     }
 
@@ -3458,7 +3546,7 @@ class MusicService :
         DefaultMediaSourceFactory(
             createDataSourceFactory(),
             ExtractorsFactory {
-                arrayOf(MatroskaExtractor(), FragmentedMp4Extractor())
+                arrayOf(MatroskaExtractor(), FragmentedMp4Extractor(), Mp4Extractor())
             },
         )
 
@@ -3517,19 +3605,16 @@ class MusicService :
             CoroutineScope(Dispatchers.IO).launch {
                 val playbackUrl =
                     database.format(mediaItem.mediaId).first()?.playbackUrl
-                        ?: YTPlayerUtils
-                            .playerResponseForMetadata(mediaItem.mediaId, null)
-                            .getOrNull()
-                            ?.playbackTracking
-                            ?.videostatsPlaybackUrl
-                            ?.baseUrl
-                playbackUrl?.let {
-                    YouTube
-                        .registerPlayback(null, playbackUrl)
-                        .onFailure {
-                            reportException(it)
-                        }
+                        ?: playbackUrlCache[cacheKey(mediaItem.mediaId)]
+                if (playbackUrl == null) {
+                    Timber.tag(TAG).w("No playback tracking URL available; skipping YouTube history registration")
+                    return@launch
                 }
+                YouTube
+                    .registerPlayback(null, playbackUrl)
+                    .onFailure {
+                        reportException(it)
+                    }
             }
         }
     }
@@ -4162,12 +4247,17 @@ class MusicService :
     suspend fun getStreamUrl(mediaId: String): String? =
         withContext(Dispatchers.IO) {
             try {
+                val song = database.song(mediaId).first()?.song
                 val playbackData =
-                    YTPlayerUtils
+                    InnerTubeXPlayer
                         .playerResponseForPlayback(
                             videoId = mediaId,
                             audioQuality = audioQuality,
                             connectivityManager = connectivityManager,
+                            contentHints = ContentHints(
+                                isExplicit = song?.explicit,
+                                isUploaded = song?.isUploaded,
+                            ),
                         ).getOrNull()
                 playbackData?.streamUrl
             } catch (e: Exception) {

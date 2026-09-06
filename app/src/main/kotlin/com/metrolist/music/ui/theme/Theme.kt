@@ -273,7 +273,21 @@ fun Bitmap.extractThemeColor(): Color {
         .swatches
         .associate { it.rgb to it.population }
     val rankedColors = Score.score(colorsToPopulation)
-    return Color(rankedColors.first())
+    // Dark artwork can yield an accent that is nearly invisible on dark surfaces,
+    // so nudge very dark accents up to a readable brightness floor.
+    return Color(rankedColors.first()).withMinimumBrightness(0.55f)
+}
+
+/**
+ * Returns this color with its HSV brightness raised to at least [minBrightness].
+ * Hue and saturation are preserved so the perceived tone stays the same.
+ */
+fun Color.withMinimumBrightness(minBrightness: Float): Color {
+    val hsv = FloatArray(3)
+    android.graphics.Color.colorToHSV(toArgb(), hsv)
+    if (hsv[2] >= minBrightness) return this
+    hsv[2] = minBrightness
+    return Color(android.graphics.Color.HSVToColor(hsv))
 }
 
 fun Bitmap.extractGradientColors(): List<Color> {

@@ -105,7 +105,9 @@ object PlayerColorExtractor {
         // Increase saturation for more vivid colors
         hsv[1] = (hsv[1] * saturationFactor).coerceAtMost(1.0f)
         // Adjust brightness for better visibility
-        hsv[2] = (hsv[2] * 0.9f).coerceIn(0.4f, 0.85f)
+        // The floor is kept reasonably high so that dark album artwork still
+        // produces a gradient on which the player icons and text stay visible.
+        hsv[2] = (hsv[2] * 0.9f).coerceIn(0.55f, 0.85f)
         
         return Color(android.graphics.Color.HSVToColor(hsv))
     }

@@ -3,11 +3,23 @@ package com.metrolist.music.ui.player
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,6 +42,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -44,6 +57,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.graphicsLayer
@@ -66,6 +80,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.Player.REPEAT_MODE_ALL
 import androidx.media3.common.Player.REPEAT_MODE_OFF
@@ -86,6 +101,13 @@ import com.metrolist.music.ui.component.BottomSheetState
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.menu.PlayerMenu
 import com.metrolist.music.ui.theme.LocalDynamicAccentColor
+import com.metrolist.music.constants.VisualizerEnabledKey
+import com.metrolist.music.utils.rememberPreference
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.res.stringResource
+import androidx.media3.common.Timeline
 import kotlinx.coroutines.delay
 
 private val albumArtFraction = 0.85f
@@ -119,6 +141,7 @@ fun LoiterPlayerContent(
     val coroutineScope = rememberCoroutineScope()
 
     val barData by playerConnection.service.visualizerProcessor.bars.collectAsStateWithLifecycle()
+    val (visualizerEnabled) = rememberPreference(VisualizerEnabledKey, defaultValue = true)
     val accentIsDark = remember(dynamicAccent) {
         (0.2126f * dynamicAccent.red + 0.7152f * dynamicAccent.green + 0.0722f * dynamicAccent.blue) < 0.3f
     }
@@ -141,9 +164,11 @@ fun LoiterPlayerContent(
     }
 
     val metadata = mediaMetadata
-    LaunchedEffect(metadata?.id, currentLyrics) {
+    LaunchedEffect(metadata?.id, currentLyrics, showInlineLyrics) {
         if (metadata != null && currentLyrics == null) {
-            delay(500)
+            // Fetch immediately when the user explicitly requests lyrics, otherwise
+            // lazily after a short grace period so the visualizer isn't delayed.
+            delay(if (showInlineLyrics) 0 else 500)
             coroutineScope.launch(Dispatchers.IO) {
                 try {
                     val entryPoint =
@@ -315,10 +340,11 @@ fun LoiterPlayerContent(
                 val entity = currentLyrics
                 if (entity != null && entity.lyrics != LYRICS_NOT_FOUND) entity.lyrics else null
             }
-            val showLyricsNow = showInlineLyrics && lyricsText != null
+            val lyricsNotFound = currentLyrics?.lyrics == LYRICS_NOT_FOUND
 
             val shuffleEnabled by playerConnection.shuffleModeEnabled.collectAsStateWithLifecycle()
             val repeatMode by playerConnection.repeatMode.collectAsStateWithLifecycle()
+            val currentMediaItemIndex by playerConnection.currentMediaItemIndex.collectAsStateWithLifecycle()
 
             Spacer(modifier = Modifier.height(12.dp))
             Box(
@@ -328,31 +354,57 @@ fun LoiterPlayerContent(
                     .heightIn(max = 160.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                AnimatedContent(
-                    targetState = showLyricsNow,
-                    transitionSpec = {
-                        fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
-                    },
-                    label = "lyrics_swap",
-                ) { showLyrics ->
-                if (showLyrics) {
-                    val text = lyricsText ?: return@AnimatedContent
-                    LyricsSnippet(
-                        lyrics = text,
-                        progress = progress,
-                        duration = duration,
-                        accentColor = lyricsVizColor,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                } else {
-                    Visualizer(
-                    barData = barData,
-                    accentColor = lyricsVizColor,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(80.dp),
-                    )
+                val slotTarget = when {
+                    showInlineLyrics && lyricsText != null -> "lyrics"
+                    showInlineLyrics && lyricsNotFound -> "lyrics_not_found"
+                    showInlineLyrics -> "lyrics_loading"
+                    visualizerEnabled -> "visualizer"
+                    else -> "upnext"
                 }
+                AnimatedContent(
+                    targetState = slotTarget,
+                    transitionSpec = {
+                        fadeIn(animationSpec = tween(250)) togetherWith fadeOut(animationSpec = tween(180))
+                    },
+                    label = "playerSlot",
+                ) { target ->
+                    when (target) {
+                        "lyrics" -> {
+                            val text = lyricsText ?: return@AnimatedContent
+                            LyricsSnippet(
+                                lyrics = text,
+                                progress = progress,
+                                duration = duration,
+                                accentColor = lyricsVizColor,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                        "lyrics_loading" -> LyricsLoading(
+                            accentColor = lyricsVizColor,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        "lyrics_not_found" -> LyricsNotFound(
+                            accentColor = lyricsVizColor,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        "visualizer" -> {
+                            Visualizer(
+                                barData = barData,
+                                accentColor = lyricsVizColor,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(80.dp),
+                            )
+                        }
+                        else -> {
+                            UpNextPreview(
+                                player = playerConnection.player,
+                                currentMediaItemIndex = currentMediaItemIndex,
+                                accentColor = lyricsVizColor,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                    }
                 }
             }
 
@@ -687,5 +739,191 @@ private fun LyricsSnippet(
                 Spacer(modifier = Modifier.height(lineHeightDp + verticalPadding * 2))
             }
         }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun UpNextPreview(
+    player: Player,
+    currentMediaItemIndex: Int,
+    accentColor: Color,
+    modifier: Modifier = Modifier,
+) {
+    // Derive the upcoming tracks directly from the live timeline so the preview
+    // always reflects the current position, independent of when the queue-window
+    // flows are refreshed (e.g. right after skipping).
+    val upNextWindows = remember(
+        currentMediaItemIndex,
+        player.currentTimeline,
+        player.shuffleModeEnabled,
+    ) {
+        buildList {
+            var index = player.currentTimeline.getNextWindowIndex(
+                currentMediaItemIndex,
+                REPEAT_MODE_OFF,
+                player.shuffleModeEnabled,
+            )
+            var guard = 0
+            while (index != C.INDEX_UNSET && size < 3 && guard++ < 100) {
+                val window = Timeline.Window()
+                player.currentTimeline.getWindow(index, window)
+                add(window)
+                index = player.currentTimeline.getNextWindowIndex(
+                    index,
+                    REPEAT_MODE_OFF,
+                    player.shuffleModeEnabled,
+                )
+            }
+        }
+    }
+    if (upNextWindows.isEmpty()) return
+
+    Column(
+        modifier = modifier.animateContentSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = stringResource(R.string.up_next),
+            style = MaterialTheme.typography.labelLarge.copy(
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 1.sp,
+            ),
+            color = accentColor.copy(alpha = 0.7f),
+            modifier = Modifier.padding(bottom = 10.dp),
+        )
+        // LazyColumn + animateItem gives each row a stable identity, so when the
+        // current track advances the top row fades out, the remaining rows slide
+        // up one position and any newly queued track fades in at the bottom.
+        // The placement spring has no bounce and the fades use fluid Material
+        // easings, so the whole transition reads as a single continuous motion.
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            itemsIndexed(
+                items = upNextWindows,
+                key = { _, window -> window.mediaItem.mediaId },
+            ) { index, window ->
+                UpNextRow(
+                    modifier = Modifier.animateItem(
+                        fadeInSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+                        placementSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                        fadeOutSpec = tween(durationMillis = 200, easing = LinearOutSlowInEasing),
+                    ),
+                    index = index,
+                    window = window,
+                    accentColor = accentColor,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun UpNextRow(
+    index: Int,
+    window: Timeline.Window,
+    accentColor: Color,
+    modifier: Modifier = Modifier,
+) {
+    val metadata = window.mediaItem.mediaMetadata
+    val title = metadata.title?.toString() ?: "Unknown"
+    val artist = metadata.artist?.toString()
+    val fade = when (index) {
+        0 -> 0.9f
+        1 -> 0.6f
+        else -> 0.35f
+    }
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // Fixed-width number gutter keeps the 1 / 2 / 3 column neatly aligned so
+        // titles line up in a clean column.
+        Text(
+            text = "${index + 1}",
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            color = accentColor.copy(alpha = fade),
+            textAlign = TextAlign.End,
+            modifier = Modifier.width(28.dp),
+        )
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f, fill = false)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = accentColor.copy(alpha = fade),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (artist != null) {
+                Text(
+                    text = artist,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = accentColor.copy(alpha = fade * 0.7f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LyricsLoading(
+    accentColor: Color,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        val transition = rememberInfiniteTransition(label = "lyricsLoading")
+        val rotation by transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 720f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1600, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
+            label = "lyricsLoadingRotation",
+        )
+        Icon(
+            painter = painterResource(R.drawable.lyrics),
+            contentDescription = null,
+            tint = accentColor.copy(alpha = 0.7f),
+            modifier = Modifier.size(28.dp).graphicsLayer { rotationZ = rotation },
+        )
+        Text(
+            text = stringResource(R.string.lyrics_loading),
+            style = MaterialTheme.typography.bodyMedium,
+            color = accentColor.copy(alpha = 0.7f),
+        )
+    }
+}
+
+@Composable
+private fun LyricsNotFound(
+    accentColor: Color,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.lyrics),
+            contentDescription = null,
+            tint = accentColor.copy(alpha = 0.5f),
+            modifier = Modifier.size(28.dp).alpha(0.7f),
+        )
+        Text(
+            text = stringResource(R.string.lyrics_not_found),
+            style = MaterialTheme.typography.bodyMedium,
+            color = accentColor.copy(alpha = 0.7f),
+        )
     }
 }

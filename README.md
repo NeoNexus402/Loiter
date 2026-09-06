@@ -1,281 +1,202 @@
-<div align="center">
-  <img src="https://github.com/NeoNexus402/Loiter/raw/main/fastlane/metadata/android/en-US/images/loiter.png" width="150" alt="Loiter Logo">
-  <h1>Loiter</h1>
-  <p><b>An advanced YouTube Music client for Android</b></p>
-  
-  <a href="https://github.com/NeoNexus402/Loiter/releases"><img src="https://img.shields.io/github/v/release/NeoNexus402/Loiter?style=for-the-badge&labelColor=0d1117" alt="Latest Release"></a>
-  <a href="https://github.com/NeoNexus402/Loiter/blob/main/LICENSE"><img src="https://img.shields.io/github/license/NeoNexus402/Loiter?style=for-the-badge&labelColor=0d1117" alt="License"></a>
+<p align="center">
+  <img src="https://github.com/NeoNexus402/Loiter/raw/main/fastlane/metadata/android/en-US/images/loiter.png" width="150" alt="Loiter logo" />
+</p>
 
-[**Features**](#features) · [**Screenshots**](#screenshots)
+<p align="center">
+  <strong>Loiter</strong> — an advanced, independent YouTube Music client for Android.
+</p>
 
-</div>
+<p align="center">
+  <a href="https://github.com/NeoNexus402/Loiter/releases"><img src="https://img.shields.io/github/v/release/NeoNexus402/Loiter?style=for-the-badge&labelColor=0d1117" alt="Latest release" /></a>
+  <a href="https://github.com/NeoNexus402/Loiter/blob/main/LICENSE"><img src="https://img.shields.io/github/license/NeoNexus402/Loiter?style=for-the-badge&labelColor=0d1117" alt="License" /></a>
+  <a href="https://github.com/NeoNexus402/Loiter/stargazers"><img src="https://img.shields.io/github/stars/NeoNexus402/Loiter?style=for-the-badge&labelColor=0d1117" alt="Stars" /></a>
+</p>
 
-> [!WARNING]
-> Regional Restriction - If YouTube Music is unavailable in your region, this app will not work without a **VPN or proxy** connecting to a supported region.
+> **Regional restriction** — YouTube Music must be available in your region. If it is not, use a VPN or proxy connected to a supported region.
 
 ---
 
-<div align="center">
+## About
 
-<h1><a id="features"></a>Features</h1>
+Loiter is a YouTube Music client built from the ground up as a fork of
+[Metrolist](https://github.com/MetrolistGroup/Metrolist). It keeps the core
+streaming, download, and library features, then goes its own way with a
+distinct layout-theme system, a single dynamic accent color, smoother motion,
+and a faster, lighter feel.
 
-<table>
-  <tr>
-    <td width="50%" valign="top">
+---
+
+## Features
 
 ### Playback
+
 - Stream any song or video from YouTube Music
 - Background playback
-- Download & cache for offline use
+- Download and cache for offline use
 - Skip silence
 - Sleep timer
 
-</td>
-    <td width="50%" valign="top">
-
 ### Audio
+
 - Audio normalization
-- Tempo & pitch control
+- Tempo and pitch control
 - Equalizer with AutoEQ profile import
 
-</td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
+### Library and Account
 
-### Layout Themes
-- **Loiter** — Default theme with dynamic accent color from album art
-- **YouTube Music** — Coming Soon
-- **Spotify** — Coming Soon
-- **Blackhole** — Inspired by Blackhole.
-- **Metrolist** — Inspired by Metrolist.
-- Each theme locks irrelevant settings automatically
-
-</td>
-    <td width="50%" valign="top">
-
-### Customization
-- Light / Dark / Black / Pure Black theme modes
-- Dynamic colors & 19 color palettes
-- Player layouts: Default & Modern
-- MiniPlayer layouts: Default & Overlay
-- NavBar styles: Default, Compact & Pill
-- Player button colors
-- Player slider style
-- Slim bottom navbar option
-
-</td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-
-### Library & Account
 - Full library management
-- Local & synced playlists
+- Local and synced playlists
 - Import playlists (CSV, M3U)
-- Reorder songs in playlist or queue
+- Reorder songs in a playlist or the queue
 - YouTube Music account login
 - Library synchronization
-- Edit song titles & artist names
+- Edit song titles and artist names
 - Explicit content tagging
 
-</td>
-    <td width="50%" valign="top">
+### Lyrics and Discovery
 
-### Lyrics & Discovery
 - Live synced lyrics (LyricsPlus, LRCLIB, Kugou)
-- AI-powered lyrics translation & romanization
+- AI-powered lyrics translation and romanization
 - Japanese lyrics romanization support
 - Share lyrics as text or image
 - Personalized quick picks
-- Search songs, albums, artists, videos, playlists
+- Search songs, albums, artists, videos, and playlists
 
-</td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
+### Themes and Customization
 
-### Social
-- Listen together with friends in real-time
-- Discord Rich Presence integration
-- Music recognition (Shazam API)
-
-</td>
-    <td width="50%" valign="top">
+- Layout themes: **Loiter**, **Metrolist**, **Blackhole**, with YouTube Music and Spotify coming soon
+- Each theme locks irrelevant settings automatically
+- Light, dark, black, and pure-black theme modes
+- Dynamic colors with 19 accent palettes
+- Player layouts: Default and Modern
+- MiniPlayer layouts: Default and Overlay
+- NavBar styles: Default, Compact, and Pill
+- Player button colors and slider style
+- Slim bottom navbar option
 
 ### Interface
-- Home screen widget
-- Playlist widgets
-- Music recognizer widget
-- Built with Material 3 & Material 3 Expressive
+
+- Home screen, playlist, and music recognizer widgets
+- Material 3 with Material 3 Expressive patterns
 - Swipe gestures for track navigation
-- Drag-to-reorder in playlists & queue
-- Copy link/share song functionality
+- Drag-to-reorder in playlists and the queue
+- Copy link and share song functionality
+- Music recognition (Shazam API)
 
-</td>
-  </tr>
-</table>
+### Social
 
-</div>
+- Listen together with friends in real time
+- Discord Rich Presence integration
 
 ---
 
-<div align="center">
+## What makes Loiter different
 
-<h1><a id="new-features"></a>New in Loiter</h1>
+- **Its own theme system** — Loiter, Metrolist, and Blackhole layouts each bring
+  their own typography, spacing, and controls. YouTube Music and Spotify
+  layouts are on the way.
+- **Smart feature locking** — each theme hides the settings that do not apply
+  to it (slider style, navbar style, player style, dynamic theme, and more).
+- **Neutral color scheme** — non-Loiter themes use a gray-black palette with
+  accent colors reserved for the key UI elements.
+- **A single, song-aware accent color** — the accent is pulled from the artwork
+  of the currently playing song and animates smoothly everywhere when it
+  changes.
+- **Gradient player backgrounds** — album-art-driven gradients.
+- **A real-time audio visualizer** — an FFT-based spectrum analyzer built on
+  ExoPlayer's AudioProcessor pipeline.
+- **Album art border** — toggle borders around the album artwork.
+- **Lean and fluid** — tightened animation specs, Material motion curves, and
+  cleaned-up code keep the app light and responsive.
 
-### What sets Loiter apart from Metrolist
+---
 
-<table>
-  <tr>
-    <td width="50%" valign="top">
+## New in v1.2.1
 
-- **Layout Theme System** — Four distinct UI themes: Loiter, YouTube Music, Spotify, and Blackhole, each with its own typography, spacing, and controls
-- **Smart Feature Locking** — Themes automatically disable irrelevant settings (slider style, nav bar style, player style, dynamic theme, etc.)
+### Player
 
-</td>
-    <td width="50%" valign="top">
+- The accent color now follows the current song's artwork, and colors are
+  brightened so controls, icons, and text stay legible on any background.
+- Theme color changes animate smoothly across the whole app, Home included.
+- The Up Next preview stays in sync with the live queue and updates the moment
+  you skip a track.
+- Up Next rows now transition smoothly: the played row fades out, the rows
+  below glide up, and the next queued track fades in.
+- Up Next rows were redesigned with aligned numbering for a cleaner look.
+- The system back button or back gesture on the expanded player now collapses
+  it back to the miniplayer.
+- Clear **Loading lyrics** and **Lyrics not found** states in the player.
 
-- **Neutral Color Scheme** — Non-Loiter themes use a grayish-black palette with accent colors applied only to key UI elements
-- **Multiple NavBar Styles** — Default, Compact, and Pill-shaped bottom navigation bar options
+### Home
 
-</td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
+- Quick Picks is always pinned to the top of the Home screen.
 
-- **MiniPlayer Layouts** — Choose between Default and Overlay mini-player designs
-- **Player Layouts** — Toggle between Default and Modern player layouts
-- **Force Black Background** — Option to force pure black backgrounds per theme
+### Performance
 
-</td>
-    <td width="50%" valign="top">
+- Smoother screen-to-screen transitions driven by Material motion curves.
+- Removed dead code and tightened animation specs for a leaner, faster app.
 
-- **Gradient Player Backgrounds** — Album art-driven gradient backgrounds on supported themes
-- **Real-time Audio Visualizer** — FFT-based spectrum analyzer in the player, built on ExoPlayer's AudioProcessor pipeline
-- **Album Art Border** — Toggle borders around album artwork
-- **M3 Expressive Migration** — Progressive adoption of Material 3 Expressive design patterns
+---
 
-</td>
-  </tr>
-</table>
+## Coming soon
 
-</div>
-
-
-### Coming Soon
-- Additional layout themes
+- Additional layout themes (YouTube Music, Spotify)
 - More MiniPlayer and Player layout options
 - Expanded theme customization controls
-- Performance optimizations and stability improvements
-
 
 ---
 
+## Screenshots
+
 <div align="center">
-
-<h1><a id="screenshots"></a>Screenshots</h1>
-
-<img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_1.png" alt="Home screen" width="30%" />
-<img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_2.png" alt="Artist screen" width="30%" />
-<img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_3.png" alt="Recognize music screen" width="30%" />
-<img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_4.png" alt="Listen together screen" width="30%" />
-<img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_5.png" alt="Player screen" width="30%" />
-<img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_6.png" alt="Player lyrics screen" width="30%" />
-
+  <img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_1.png" alt="Home screen" width="30%" />
+  <img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_2.png" alt="Artist screen" width="30%" />
+  <img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_3.png" alt="Recognize music screen" width="30%" />
+  <img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_4.png" alt="Listen together screen" width="30%" />
+  <img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_5.png" alt="Player screen" width="30%" />
+  <img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_6.png" alt="Player lyrics screen" width="30%" />
 </div>
 
 ---
 
+## Acknowledgments
 
-<div align="center">
+Loiter would not exist without the people behind the projects it builds on.
 
-<h1>Special Thanks</h1>
+### Main inspirations
 
-<h3>Loiter was only possible for these people!</h3>
+| Project | Authors |
+| --- | --- |
+| **Metrolist** | [Mo Agamy](https://github.com/mostafaalagamy), [Metrolist Group](https://github.com/MetrolistGroup) |
+| **InnerTune** | [Zion Huang](https://github.com/z-huang), [Malopieds](https://github.com/Malopieds) |
+| **OuterTune** | [Davide Garberi](https://github.com/DD3Boh), [Michael Zh](https://github.com/mikooomich) |
 
-<h3>Main Inspirations</h3>
- 
-<table>
-  <thead>
-    <tr>
-      <th align="center">Project</th>
-      <th align="center">Authors</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Metrolist</strong></td>
-      <td><a href="https://github.com/mostafaalagamy">Mo Agamy</a> · <a href="https://github.com/MetrolistGroup">Metrolist Group</a></td>
-    </tr>
-    <tr>
-      <td><strong>InnerTune</strong></td>
-      <td><a href="https://github.com/z-huang">Zion Huang</a> · <a href="https://github.com/Malopieds">Malopieds</a></td>
-    </tr>
-    <tr>
-      <td><strong>OuterTune</strong></td>
-      <td><a href="https://github.com/DD3Boh">Davide Garberi</a> · <a href="https://github.com/mikooomich">Michael Zh</a></td>
-    </tr>
-  </tbody>
-</table>
+### Libraries and integrations
 
-<h3>Libraries & Integrations</h3>
- 
-<table>
-  <thead>
-    <tr>
-      <th align="center">Project</th>
-      <th align="center">Contribution</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><a href="https://github.com/dead8309/Kizzy"><strong>Kizzy</strong></a></td>
-      <td>Discord Rich Presence implementation & inspiration</td>
-    </tr>
-    <tr>
-      <td><a href="https://better-lyrics.boidu.dev"><strong>Better Lyrics</strong></a></td>
-      <td>Time-synced lyrics with word-by-word highlighting & YouTube Music integration</td>
-    </tr>
-    <tr>
-      <td><a href="https://github.com/maxrave-dev/SimpMusic"><strong>SimpMusic Lyrics</strong></a></td>
-      <td>Lyrics data via the SimpMusic Lyrics API</td>
-    </tr>
-    <tr>
-      <td><a href="https://github.com/MetrolistGroup/metroserver"><strong>metroserver</strong></a></td>
-      <td>Listen-together real-time backend</td>
-    </tr>
-    <tr>
-      <td><a href="https://github.com/aleksey-saenko/MusicRecognizer"><strong>MusicRecognizer</strong></a></td>
-      <td>Music recognition feature & Shazam API integration</td>
-    </tr>
-    <tr>
-      <td><a href="https://github.com/dzolnai/ExoVisualizer"><strong>ExoVisualizer</strong></a></td>
-      <td>Audio visualizer approach using ExoPlayer AudioProcessor + FFT</td>
-    </tr>
-  </tbody>
-</table>
+| Project | Contribution |
+| --- | --- |
+| [Kizzy](https://github.com/dead8309/Kizzy) | Discord Rich Presence implementation and inspiration |
+| [Better Lyrics](https://better-lyrics.boidu.dev) | Time-synced lyrics with word-by-word highlighting and YouTube Music integration |
+| [SimpMusic Lyrics](https://github.com/maxrave-dev/SimpMusic) | Lyrics data through the SimpMusic Lyrics API |
+| [metroserver](https://github.com/MetrolistGroup/metroserver) | Listen-together real-time backend |
+| [MusicRecognizer](https://github.com/aleksey-saenko/MusicRecognizer) | Music recognition feature and Shazam API integration |
+| [ExoVisualizer](https://github.com/dzolnai/ExoVisualizer) | Audio visualizer approach using ExoPlayer AudioProcessor and FFT |
 
-<h3>We also thank the entire open-source community! Every library, tool, and API that powers this project!</h3>
-
-</div>
+And the entire open-source community. Every library, tool, and API that powers
+this project is appreciated.
 
 ---
 
-<div align="center">
+## Disclaimer
 
-<h1>Disclaimer</h1>
+This project is **not affiliated with, funded by, authorized by, endorsed by,
+or associated with** YouTube, Google LLC, Metrolist Group LLC, or any of their
+affiliates and subsidiaries. Loiter is a fork of the Metrolist project.
 
-This project is **not affiliated with, funded, authorized, endorsed by, or associated** with YouTube, Google LLC, Metrolist Group LLC, or any of their affiliates and subsidiaries. Loiter is a fork of the Metrolist project.
-
-All trademarks, service marks, and intellectual property rights referenced in this project belong to their respective owners.
-
-</div>
+All trademarks, service marks, and intellectual property rights referenced here
+belong to their respective owners.
 
 ---
 
-<div align="center">
-  <b>Loiter</b> is maintained by Ratul Acharya (<a href="https://github.com/NeoNexus402">@NeoNexus402</a>).<br>
-  <i>Made with ❤️ in Bangladesh.</i><br><br>
-  <sup>Originally forked from Metrolist by <a href="https://github.com/mostafaalagamy">Mo Agamy</a>. Thanks to the entire open-source community for the tools and APIs that power this project!</sup>
-</div>
+Loiter is maintained by Ratul Acharya ([@NeoNexus402](https://github.com/NeoNexus402)).
+Originally forked from Metrolist by [Mo Agamy](https://github.com/mostafaalagamy).

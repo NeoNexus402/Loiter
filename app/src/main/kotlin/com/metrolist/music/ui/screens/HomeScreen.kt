@@ -1109,6 +1109,19 @@ fun HomeScreen(
                         else -> defaultOrder[section] ?: 0
                     }
                 }
+            }.let { ordered ->
+                // Quick picks is always pinned to the very top of the feed so it is
+                // never pushed down by randomized or "similar to" sections.
+                if (quickPicks?.isNotEmpty() == true) {
+                    ordered.toMutableList().apply {
+                        val quickPicksIndex = indexOf(HomeSection.QuickPicks)
+                        if (quickPicksIndex > 0) {
+                            add(0, removeAt(quickPicksIndex))
+                        }
+                    }
+                } else {
+                    ordered
+                }
             }
         }
 

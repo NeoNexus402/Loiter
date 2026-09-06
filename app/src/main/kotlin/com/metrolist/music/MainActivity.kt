@@ -18,8 +18,12 @@ import android.os.IBinder
 import android.view.View
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -664,14 +668,25 @@ class MainActivity : ComponentActivity() {
                 }
         }
 
+        // Smoothly interpolate the accent color so theme changes (e.g. when a new
+        // song with different artwork starts playing) transition everywhere at once
+        // instead of snapping, including screens that read MaterialTheme colors.
+        val effectiveAccentColor =
+            if (currentLayoutTheme == LayoutTheme.LOITER) themeColor else (layoutThemeConfig.accentColor ?: LoiterDefaultAccent)
+        val animatedAccentColor by animateColorAsState(
+            targetValue = effectiveAccentColor,
+            animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+            label = "themeAccent",
+        )
+
         MetrolistTheme(
             darkTheme = useDarkTheme,
             pureBlack = pureBlack,
-            themeColor = themeColor,
+            themeColor = animatedAccentColor,
             forceBlackBackground = layoutThemeConfig.forceBlackBackground,
             useNeutralScheme = isNonLoiterTheme,
             isLoiter = currentLayoutTheme == LayoutTheme.LOITER,
-            dynamicAccentColor = if (currentLayoutTheme == LayoutTheme.LOITER) themeColor else (layoutThemeConfig.accentColor ?: LoiterDefaultAccent),
+            dynamicAccentColor = animatedAccentColor,
         ) {
             BoxWithConstraints(
                 modifier =
@@ -822,8 +837,7 @@ class MainActivity : ComponentActivity() {
                     rememberBottomSheetState(
                         dismissedBound = 0.dp,
                         collapsedBound =
-                            bottomInset +
-                                (if (!showRail && shouldShowNavigationBar) navPadding else 0.dp) +
+                            (if (shouldShowNavigationBar && !showRail) bottomInset + navPadding else 0.dp) +
                                 miniPlayerBottomSpacing +
                                 MiniPlayerHeight,
                         expandedBound = maxHeight,
@@ -1337,9 +1351,9 @@ class MainActivity : ComponentActivity() {
                                         val previousRouteIndex = routeIndexMap[initialState.destination.route] ?: -1
 
                                         if (currentRouteIndex == -1 || currentRouteIndex > previousRouteIndex) {
-                                            slideInHorizontally { it / 8 } + fadeIn(tween(200))
+                                            slideInHorizontally { it / 10 } + fadeIn(tween(260, easing = FastOutSlowInEasing))
                                         } else {
-                                            slideInHorizontally { -it / 8 } + fadeIn(tween(200))
+                                            slideInHorizontally { -it / 10 } + fadeIn(tween(260, easing = FastOutSlowInEasing))
                                         }
                                     },
                                     exitTransition = {
@@ -1347,9 +1361,9 @@ class MainActivity : ComponentActivity() {
                                         val targetRouteIndex = routeIndexMap[targetState.destination.route] ?: -1
 
                                         if (targetRouteIndex == -1 || targetRouteIndex > currentRouteIndex) {
-                                            slideOutHorizontally { -it / 8 } + fadeOut(tween(200))
+                                            slideOutHorizontally { -it / 10 } + fadeOut(tween(170, easing = LinearOutSlowInEasing))
                                         } else {
-                                            slideOutHorizontally { it / 8 } + fadeOut(tween(200))
+                                            slideOutHorizontally { it / 10 } + fadeOut(tween(170, easing = LinearOutSlowInEasing))
                                         }
                                     },
                                     popEnterTransition = {
@@ -1357,9 +1371,9 @@ class MainActivity : ComponentActivity() {
                                         val previousRouteIndex = routeIndexMap[initialState.destination.route] ?: -1
 
                                         if (previousRouteIndex != -1 && previousRouteIndex < currentRouteIndex) {
-                                            slideInHorizontally { it / 8 } + fadeIn(tween(200))
+                                            slideInHorizontally { it / 10 } + fadeIn(tween(260, easing = FastOutSlowInEasing))
                                         } else {
-                                            slideInHorizontally { -it / 8 } + fadeIn(tween(200))
+                                            slideInHorizontally { -it / 10 } + fadeIn(tween(260, easing = FastOutSlowInEasing))
                                         }
                                     },
                                     popExitTransition = {
@@ -1367,9 +1381,9 @@ class MainActivity : ComponentActivity() {
                                         val targetRouteIndex = routeIndexMap[targetState.destination.route] ?: -1
 
                                         if (currentRouteIndex != -1 && currentRouteIndex < targetRouteIndex) {
-                                            slideOutHorizontally { -it / 8 } + fadeOut(tween(200))
+                                            slideOutHorizontally { -it / 10 } + fadeOut(tween(170, easing = LinearOutSlowInEasing))
                                         } else {
-                                            slideOutHorizontally { it / 8 } + fadeOut(tween(200))
+                                            slideOutHorizontally { it / 10 } + fadeOut(tween(170, easing = LinearOutSlowInEasing))
                                         }
                                     },
                                     modifier = Modifier.nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
@@ -1385,6 +1399,20 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
+
+                    // Back press / back gesture on the expanded player collapses it to
+                    // the miniplayer. It is composed after the NavHost so it takes
+                    // precedence over navigation-level back handling, and it is gated on
+                    // the sheet progress instead of an exact "expanded" comparison so it
+                    // stays reliable even while the sheet animation is settling.
+                    BackHandler(
+                        enabled = playerBottomSheetState.progress > 0.5f,
+                        onBack = {
+                            coroutineScope.launch {
+                                playerBottomSheetState.collapseSoft()
+                            }
+                        },
+                    )
 
                     BottomSheetMenu(
                         state = LocalMenuState.current,
