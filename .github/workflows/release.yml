@@ -7,6 +7,9 @@ on:
       - "app/build.gradle.kts"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   check-version:
     if: "!contains(github.ref, 'refs/tags')"
@@ -202,7 +205,9 @@ jobs:
 
       - name: Create Release
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          # Prefer the dedicated release token if configured, otherwise fall back
+          # to the built-in GITHUB_TOKEN so the release is still created.
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
         run: |
           echo "Creating release v${{ needs.check-version.outputs.new_version }}"
 
