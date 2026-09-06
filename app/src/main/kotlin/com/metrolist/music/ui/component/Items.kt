@@ -58,6 +58,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
@@ -790,6 +791,7 @@ fun PlaylistListItem(
         PlaylistThumbnail(
             thumbnails = playlist.thumbnails,
             size = ListThumbnailSize,
+            playlistTitle = playlist.playlist.name,
             placeHolder = {
                 val painter = when (playlist.playlist.name) {
                     stringResource(R.string.liked) -> R.drawable.favorite_border
@@ -890,6 +892,7 @@ fun PlaylistGridItem(
         PlaylistThumbnail(
             thumbnails = playlist.thumbnails,
             size = width,
+            playlistTitle = playlist.playlist.name,
             placeHolder = {
                 val painter = when (playlist.playlist.name) {
                     stringResource(R.string.liked) -> R.drawable.favorite_border
@@ -1465,23 +1468,40 @@ fun LocalThumbnail(
     }
 }
 
+/**
+ * Deterministic cover colors derived from a playlist name so every playlist gets
+ * its own unique gradient cover, while keeping the same playlist looking identical
+ * across list, grid and detail views.
+ */
+internal fun playlistGradientColors(title: String?): List<Color> {
+    val seed = (title ?: "playlist").hashCode()
+    val hue = ((seed % 360) + 360) % 360
+    val hue2 = (hue + 45) % 360
+    return listOf(
+        Color.hsv(hue.toFloat(), 0.55f, 0.78f),
+        Color.hsv(hue2.toFloat(), 0.60f, 0.48f),
+    )
+}
+
 @Composable
 fun PlaylistThumbnail(
     thumbnails: List<String>,
     size: Dp,
     placeHolder: @Composable () -> Unit,
     shape: Shape,
-    cacheKey: String? = null
+    cacheKey: String? = null,
+    playlistTitle: String? = null,
 ) {
     val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
-    
+    val gradient = remember(playlistTitle) { playlistGradientColors(playlistTitle) }
+
     when (thumbnails.size) {
         0 -> Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(size)
                 .clip(shape)
-                .background(MaterialTheme.colorScheme.surfaceContainer)
+                .background(Brush.linearGradient(gradient))
         ) {
             placeHolder()
         }
@@ -1502,33 +1522,18 @@ fun PlaylistThumbnail(
                 .clip(shape)
         )
         else -> Box(
+            contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(size)
                 .clip(shape)
+                .background(Brush.linearGradient(gradient))
         ) {
-            listOf(
-                Alignment.TopStart,
-                Alignment.TopEnd,
-                Alignment.BottomStart,
-                Alignment.BottomEnd
-            ).fastForEachIndexed { index, alignment ->
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(thumbnails.getOrNull(index)?.resize((size.value * 1.5).toInt()))
-                        .apply { /* Removed cache key extensions due to unresolved in env */ }
-                        .memoryCachePolicy(coil3.request.CachePolicy.ENABLED)
-                        .diskCachePolicy(coil3.request.CachePolicy.ENABLED)
-                        .networkCachePolicy(coil3.request.CachePolicy.ENABLED)
-                        .build(),
-                    contentDescription = null,
-                    contentScale = if (cropAlbumArt) ContentScale.Crop else ContentScale.Fit,
-                    placeholder = painterResource(R.drawable.queue_music),
-                    error = painterResource(R.drawable.queue_music),
-                    modifier = Modifier
-                        .align(alignment)
-                        .size(size / 2)
-                )
-            }
+            Icon(
+                painter = painterResource(R.drawable.queue_music),
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.35f),
+                modifier = Modifier.size(size / 3),
+            )
         }
     }
 }

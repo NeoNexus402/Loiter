@@ -41,6 +41,7 @@ import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -48,6 +49,12 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -143,18 +150,22 @@ fun LoiterHomeScreen(
     val windowInsets = LocalPlayerAwareWindowInsets.current
     val pullToRefreshState = rememberPullToRefreshState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(windowInsets)
-            .padding(top = 16.dp),
+    Box(
+        modifier = Modifier.fillMaxSize(),
     ) {
-        PullToRefreshBox(
-            state = pullToRefreshState,
-            isRefreshing = isRefreshing,
-            onRefresh = { homeViewModel.refresh() },
-            modifier = Modifier.fillMaxSize(),
+        LoiterAnimatedArt(accentColor = dynamicAccent)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(windowInsets)
+                .padding(top = 16.dp),
         ) {
+            PullToRefreshBox(
+                state = pullToRefreshState,
+                isRefreshing = isRefreshing,
+                onRefresh = { homeViewModel.refresh() },
+                modifier = Modifier.fillMaxSize(),
+            ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 96.dp),
@@ -184,6 +195,57 @@ fun LoiterHomeScreen(
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
                         )
+                    }
+                }
+
+                if (!quickPicks.isNullOrEmpty()) {
+                    val songs = quickPicks!!
+                    item(key = "qp_title") {
+                        NavigationTitle(
+                            title = quickPicksTitle,
+                            onPlayAllClick = {
+                                playerConnection.playQueue(
+                                    ListQueue(
+                                        title = quickPicksTitle,
+                                        items = songs.map { it.toMediaItem() },
+                                    ),
+                                )
+                            },
+                        )
+                    }
+                    item(key = "qp_content") {
+                        LazyHorizontalGrid(
+                            rows = GridCells.Fixed(4),
+                            contentPadding = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal).asPaddingValues(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(ListItemHeight * 4),
+                        ) {
+                            items(
+                                items = songs.distinctBy { it.id },
+                                key = { "qp_${it.id}" },
+                            ) { song ->
+                                SongListItem(
+                                    song = song,
+                                    isActive = song.id == mediaMetadata?.id,
+                                    isPlaying = isPlaying,
+                                    isSwipeable = false,
+                                    modifier = Modifier
+                                        .width(240.dp)
+                                        .combinedClickable(
+                                            onClick = {
+                                                playerConnection.playQueue(
+                                                    ListQueue(
+                                                        items = songs.map { it.toMediaItem() },
+                                                        startIndex = songs.indexOf(song).coerceAtLeast(0),
+                                                    ),
+                                                )
+                                            },
+                                        ),
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(8.dp))
                     }
                 }
 
@@ -307,57 +369,6 @@ fun LoiterHomeScreen(
                             navController = navController,
                             playerConnection = playerConnection,
                         )
-                        Spacer(Modifier.height(8.dp))
-                    }
-                }
-
-                if (!quickPicks.isNullOrEmpty()) {
-                    val songs = quickPicks!!
-                    item(key = "qp_title") {
-                        NavigationTitle(
-                            title = quickPicksTitle,
-                            onPlayAllClick = {
-                                playerConnection.playQueue(
-                                    ListQueue(
-                                        title = quickPicksTitle,
-                                        items = songs.map { it.toMediaItem() },
-                                    ),
-                                )
-                            },
-                        )
-                    }
-                    item(key = "qp_content") {
-                        LazyHorizontalGrid(
-                            rows = GridCells.Fixed(4),
-                            contentPadding = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal).asPaddingValues(),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(ListItemHeight * 4),
-                        ) {
-                            items(
-                                items = songs.distinctBy { it.id },
-                                key = { "qp_${it.id}" },
-                            ) { song ->
-                                SongListItem(
-                                    song = song,
-                                    isActive = song.id == mediaMetadata?.id,
-                                    isPlaying = isPlaying,
-                                    isSwipeable = false,
-                                    modifier = Modifier
-                                        .width(240.dp)
-                                        .combinedClickable(
-                                            onClick = {
-                                                playerConnection.playQueue(
-                                                    ListQueue(
-                                                        items = songs.map { it.toMediaItem() },
-                                                        startIndex = songs.indexOf(song).coerceAtLeast(0),
-                                                    ),
-                                                )
-                                            },
-                                        ),
-                                )
-                            }
-                        }
                         Spacer(Modifier.height(8.dp))
                     }
                 }
@@ -672,6 +683,69 @@ fun LoiterHomeScreen(
                 }
             }
         }
+        }
+    }
+}
+
+@Composable
+private fun LoiterAnimatedArt(
+    accentColor: androidx.compose.ui.graphics.Color,
+    modifier: Modifier = Modifier,
+) {
+    val transition = rememberInfiniteTransition(label = "home_art")
+
+    val driftA by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 14000, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "driftA",
+    )
+    val driftB by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 17000, easing = androidx.compose.animation.core.LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "driftB",
+    )
+    val driftC by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 20000, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "driftC",
+    )
+
+    Canvas(modifier = modifier.fillMaxSize()) {
+        val baseColor = accentColor
+
+        fun drawBlob(cxRatio: Float, cyRatio: Float, radiusRatio: Float, alpha: Float) {
+            val cx = size.width * cxRatio
+            val cy = size.height * cyRatio
+            val radius = size.width * radiusRatio
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        baseColor.copy(alpha = alpha),
+                        baseColor.copy(alpha = 0f),
+                    ),
+                    center = androidx.compose.ui.geometry.Offset(cx, cy),
+                    radius = radius,
+                ),
+                radius = radius,
+                center = androidx.compose.ui.geometry.Offset(cx, cy),
+            )
+        }
+
+        drawBlob(0.1f + driftA * 0.2f, 0.05f + driftA * 0.1f, 0.55f, 0.20f)
+        drawBlob(0.75f + driftB * 0.2f, 0.2f + driftB * 0.15f, 0.6f, 0.16f)
+        drawBlob(0.3f + driftC * 0.25f, 0.55f + driftC * 0.2f, 0.65f, 0.18f)
     }
 }
 

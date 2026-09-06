@@ -31,6 +31,9 @@ class VisualizerAudioProcessor : AudioProcessor {
     private var isActive = false
     private var inputEnded = false
 
+    @Volatile
+    var enabled: Boolean = true
+
     private val pcmBuffer = ShortArray(FFT_SIZE)
     private var pcmPos = 0
     private var outputBuffer: ByteBuffer = EMPTY_BUFFER
@@ -99,6 +102,10 @@ class VisualizerAudioProcessor : AudioProcessor {
     }
 
     private fun processFft() {
+        if (!enabled) {
+            pcmPos = 0
+            return
+        }
         val nyquist = sampleRate / 2
         if (nyquist == 0) return
 

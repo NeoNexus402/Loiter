@@ -106,12 +106,8 @@ fun BottomSheet(
                 )
             }
     ) {
-        BackHandler(enabled = !state.isDismissed) {
-            if (state.isExpanded) {
-                state.collapseSoft()
-            } else {
-                state.dismiss()
-            }
+        BackHandler(enabled = state.progress > 0.5f && !state.isDismissed) {
+            state.collapseSoft()
         }
 
         // main content - always composed to avoid composition delay on expand

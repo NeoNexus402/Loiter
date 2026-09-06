@@ -67,6 +67,9 @@ import com.metrolist.music.constants.SkipSilenceInstantKey
 import com.metrolist.music.constants.SkipSilenceKey
 import com.metrolist.music.constants.StopMusicOnTaskClearKey
 import com.metrolist.music.constants.VarispeedKey
+import com.metrolist.music.constants.VisualizerEnabledKey
+import com.metrolist.music.ui.theme.LayoutTheme
+import com.metrolist.music.ui.theme.LocalLayoutTheme
 import com.metrolist.music.ui.component.DefaultDialog
 import com.metrolist.music.ui.component.EnumDialog
 import com.metrolist.music.ui.component.IconButton
@@ -150,6 +153,12 @@ fun PlayerSettings(
     val (seekExtraSeconds, onSeekExtraSeconds) = rememberPreference(
         SeekExtraSeconds,
         defaultValue = false
+    )
+
+    val isLoiterTheme = LocalLayoutTheme.current == LayoutTheme.LOITER
+    val (visualizerEnabled, onVisualizerEnabledChange) = rememberPreference(
+        VisualizerEnabledKey,
+        defaultValue = true
     )
 
     val (autoLoadMore, onAutoLoadMoreChange) = rememberPreference(
@@ -236,7 +245,6 @@ fun PlayerSettings(
                     AudioQuality.AUTO -> stringResource(R.string.audio_quality_auto)
                     AudioQuality.HIGH -> stringResource(R.string.audio_quality_high)
                     AudioQuality.LOW -> stringResource(R.string.audio_quality_low)
-                    AudioQuality.VERY_HIGH -> stringResource(R.string.audio_quality_very_high)
                 }
             }
         )
@@ -308,7 +316,6 @@ fun PlayerSettings(
                                 AudioQuality.AUTO -> stringResource(R.string.audio_quality_auto)
                                 AudioQuality.HIGH -> stringResource(R.string.audio_quality_high)
                                 AudioQuality.LOW -> stringResource(R.string.audio_quality_low)
-                                AudioQuality.VERY_HIGH -> stringResource(R.string.audio_quality_very_high)
                             }
                         )
                     },
@@ -500,6 +507,29 @@ fun PlayerSettings(
                     },
                     onClick = { if (!crossfadeEnabled) onAudioOffloadChange(!audioOffload) }
                 ))
+                if (isLoiterTheme) {
+                    add(Material3SettingsItem(
+                        icon = painterResource(R.drawable.equalizer),
+                        title = { Text(stringResource(R.string.visualizer)) },
+                        description = { Text(stringResource(R.string.visualizer_desc)) },
+                        trailingContent = {
+                            Switch(
+                                checked = visualizerEnabled,
+                                onCheckedChange = onVisualizerEnabledChange,
+                                thumbContent = {
+                                    Icon(
+                                        painter = painterResource(
+                                            id = if (visualizerEnabled) R.drawable.check else R.drawable.close
+                                        ),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SwitchDefaults.IconSize)
+                                    )
+                                }
+                            )
+                        },
+                        onClick = { onVisualizerEnabledChange(!visualizerEnabled) }
+                    ))
+                }
                 add(Material3SettingsItem(
                     icon = painterResource(R.drawable.graphic_eq),
                     title = { Text(stringResource(R.string.varispeed)) },

@@ -5,6 +5,7 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
+        mavenLocal()
     }
 }
 
@@ -16,6 +17,13 @@ dependencyResolutionManagement {
         mavenCentral()
         maven { setUrl("https://jitpack.io") }
         maven { setUrl("https://maven.aliyun.com/repository/public") }
+        exclusiveContent {
+            // Resolve the InnerTubeX library only from jitpack, never other repos.
+            forRepository { maven { name = "jitpack"; setUrl("https://jitpack.io") } }
+            filter {
+                includeGroup("com.github.MetrolistGroup.innertubex")
+            }
+        }
     }
 }
 
