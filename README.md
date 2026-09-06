@@ -148,14 +148,41 @@ and a faster, lighter feel.
 
 ## Screenshots
 
+Screenshots are organized by layout theme. The Loiter, Metrolist, and Blackhole
+themes each have their own gallery, while the YouTube Music and Spotify themes
+are still in development.
+
+### Loiter theme
+
 <div align="center">
-  <img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_1.png" alt="Home screen" width="30%" />
-  <img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_2.png" alt="Artist screen" width="30%" />
-  <img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_3.png" alt="Recognize music screen" width="30%" />
-  <img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_4.png" alt="Listen together screen" width="30%" />
-  <img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_5.png" alt="Player screen" width="30%" />
-  <img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_6.png" alt="Player lyrics screen" width="30%" />
+  <img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/loiter_theme_1.png" alt="Loiter theme screenshot 1" width="30%" />
+  <img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/loiter_theme_2.png" alt="Loiter theme screenshot 2" width="30%" />
+  <img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/loiter_theme_3.png" alt="Loiter theme screenshot 3" width="30%" />
 </div>
+
+### Metrolist theme
+
+<div align="center">
+  <img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/metrolist_theme_1.png" alt="Metrolist theme screenshot 1" width="30%" />
+  <img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/metrolist_theme_2.png" alt="Metrolist theme screenshot 2" width="30%" />
+  <img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/metrolist_theme_3.png" alt="Metrolist theme screenshot 3" width="30%" />
+</div>
+
+### Blackhole theme
+
+<div align="center">
+  <img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/blackhole_theme_1.png" alt="Blackhole theme screenshot 1" width="30%" />
+  <img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/blackhole_theme_2.png" alt="Blackhole theme screenshot 2" width="30%" />
+  <img src="https://github.com/NeoNexus402/Loiter/blob/main/fastlane/metadata/android/en-US/images/screenshots/blackhole_theme_3.png" alt="Blackhole theme screenshot 3" width="30%" />
+</div>
+
+### YouTube Music theme
+
+_Coming soon._
+
+### Spotify theme
+
+_Coming soon._
 
 ---
 
