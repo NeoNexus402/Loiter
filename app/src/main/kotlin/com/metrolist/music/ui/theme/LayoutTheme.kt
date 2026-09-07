@@ -16,14 +16,13 @@ import androidx.compose.runtime.Immutable
 
 enum class LayoutTheme(
     val displayName: String,
-    val description: String,
     val isComingSoon: Boolean = false,
 ) {
-    METROLIST("Metrolist", "Inspired by the Metrolist app"),
-    LOITER("Loiter", "The default theme of Loiter"),
-    YT_MUSIC("YouTube Music", "Inspired by YouTube Music — full-bleed thumbnails, compact controls", isComingSoon = true),
-    SPOTIFY("Spotify", "Inspired by Spotify — bold typography, dark accents, gradient player", isComingSoon = true),
-    BLACKHOLE("Blackhole", "Inspired by Blackhole — large artwork, heavy blur, wave animations"),
+    METROLIST("Metrolist"),
+    LOITER("Loiter"),
+    YT_MUSIC("YouTube Music", isComingSoon = true),
+    SPOTIFY("Spotify", isComingSoon = true),
+    BLACKHOLE("Blackhole"),
 }
 
 enum class NavBarStyle {
@@ -76,8 +75,8 @@ data class LayoutThemeConfig(
         get() = accentColor ?: seedColor
 }
 
-val LocalLayoutTheme = compositionLocalOf(structuralEqualityPolicy()) { LayoutTheme.METROLIST }
-val LocalLayoutThemeConfig = compositionLocalOf(structuralEqualityPolicy()) { metrolistThemeConfig }
+val LocalLayoutTheme = compositionLocalOf(structuralEqualityPolicy()) { LayoutTheme.LOITER }
+val LocalLayoutThemeConfig = compositionLocalOf(structuralEqualityPolicy()) { loiterThemeConfig }
 
 /**
  * Resolves the accent color used by menus and settings groups.

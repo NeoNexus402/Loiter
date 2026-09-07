@@ -121,10 +121,8 @@ fun ThemeScreen(
 ) {
     val (darkMode, onDarkModeChange) = rememberEnumPreference(DarkModeKey, DarkMode.AUTO)
     val (pureBlack, onPureBlackChangeRaw) = rememberPreference(PureBlackKey, defaultValue = false)
-    val (layoutThemeRaw) = rememberEnumPreference(LayoutThemeKey, defaultValue = LayoutTheme.METROLIST)
-    val layoutTheme = remember(layoutThemeRaw) {
-        if (layoutThemeRaw.name == "LOITER") LayoutTheme.METROLIST else layoutThemeRaw
-    }
+    val (layoutThemeRaw) = rememberEnumPreference(LayoutThemeKey, defaultValue = LayoutTheme.LOITER)
+    val layoutTheme = layoutThemeRaw
     val themeConfig = remember(layoutTheme) { configForTheme(layoutTheme) }
     val darkModeLocked = themeConfig.forceDarkTheme
     val themeColorsLocked = themeConfig.lockDynamicTheme
