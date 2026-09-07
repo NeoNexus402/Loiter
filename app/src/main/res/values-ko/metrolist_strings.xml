@@ -37,7 +37,7 @@
     <string name="wrapped_top_album_title">당신의 최애 앨범은</string>
     <string name="wrapped_top_song_album_art_content_description">앨범 아트</string>
     <string name="wrapped_top_artist_title">올해 당신의 최애 아티스트는</string>
-    <string name="wrapped_intro_title">METROLIST</string>
+    <string name="wrapped_intro_title">Loiter</string>
     <string name="wrapped_year">2025</string>
     <string name="equalizer_header">이퀄라이저</string>
     <string name="no_profiles">이퀄라이저 프로필 없음</string>
@@ -192,8 +192,8 @@
     <string name="crossfade">크로스페이드</string>
     <string name="crossfade_desc">곡의 끝과 다음 곡의 시작을 겹쳐서 자연스럽게 재생합니다</string>
     <string name="widget_recognizer_name">노래 검색기</string>
-    <string name="tap_to_play">Metrolist 열기</string>
-    <string name="tap_to_open">Metrolist 열기</string>
+    <string name="tap_to_play">Loiter 열기</string>
+    <string name="tap_to_open">Loiter 열기</string>
     <string name="widget_description">재생 제어가 가능한 음악 위젯</string>
     <string name="turntable_widget_description">재생 및 좋아요 제어가 가능한 원형 위젯</string>
     <string name="widget_music_player">음악 플레이어</string>
@@ -245,7 +245,7 @@
     <string name="release_notes">릴리스 노트</string>
     <string name="changelog">변경 사항</string>
     <string name="changelog_empty">표시할 변경 사항이 없습니다</string>
-    <string name="github_releases_url">https://github.com/MetrolistGroup/Metrolist/releases</string>
+    <string name="github_releases_url">https://github.com/NeoNexus402/Loiter/releases</string>
     <string name="list_bullet">•</string>
     <string name="view_on_github">GitHub에서 보기</string>
     <string name="current_version">현재 버전</string>
@@ -280,7 +280,7 @@
     <string name="wrapped_top_song_listening_time">당신은 총 %d분 동안 함께했습니다!</string>
     <string name="wrapped_intro_subtitle">올 한 해 어떤 음악과 함께했는지 확인해 보세요…</string>
     <string name="wrapped_intro_button">시작합니다!</string>
-    <string name="wrapped_logo_content_description">Metrolist 로고</string>
+    <string name="wrapped_logo_content_description">Loiter 로고</string>
     <string name="wrapped_ready_title">연말 결산 준비 완료!</string>
     <string name="wrapped_ready_subtitle">올해 당신이 사랑한 음악들을 만나보세요…</string>
     <string name="wrapped_thank_you">함께해주셔서 감사합니다!</string>
@@ -297,7 +297,7 @@
     <string name="plays">회 재생</string>
     <string name="casting_to">%s(으)로 전송 중</string>
     <string name="progress_percent">진행률 %s%%</string>
-    <string name="listening_to_metrolist">Metrolist에서 감상 중</string>
+    <string name="listening_to_metrolist">Loiter에서 감상 중</string>
     <string name="failed_to_create_image">이미지를 생성하지 못했습니다: %s</string>
     <string name="error_playing">재생 오류</string>
     <string name="failed_to_parse_proxy">프록시 URL을 분석하지 못했습니다</string>
@@ -307,7 +307,7 @@
     <string name="error_podcast_subscribe">팟캐스트를 구독하지 못했습니다</string>
     <string name="error_podcast_unsubscribe">팟캐스트 구독을 해제하지 못했습니다</string>
     <string name="view_channel">채널 보기</string>
-    <string name="metrolist">METROLIST</string>
+    <string name="metrolist">Loiter</string>
     <string name="start_radio_desc">이 항목을 기반으로 라디오 시작</string>
     <string name="crossfade_beta_title">베타 기능!</string>
     <string name="crossfade_beta_message">크로스페이드는 베타 기능으로 버그가 있을 수 있습니다. 문제가 발생하면 제보해 주십시오.\n\n참고: 기술적 한계로 오디오 오프로드가 비활성화됩니다</string>
@@ -356,7 +356,7 @@
     <string name="enable_scrobbling">스크로블링 활성화</string>
     <string name="lastfm_now_playing">현재 재생 정보 전송</string>
     <string name="last_fm_send_likes">\'좋아요\' 및 \'싫어요\' 동기화</string>
-    <string name="last_fm_send_likes_description">Metrolist에서 곡에 좋아요 또는 싫어요를 표시하면 Last.fm에도 동일하게 반영합니다</string>
+    <string name="last_fm_send_likes_description">Loiter에서 곡에 좋아요 또는 싫어요를 표시하면 Last.fm에도 동일하게 반영합니다</string>
     <string name="scrobbling_configuration">스크로블링 설정</string>
     <string name="scrobble_min_track_duration">지정된 시간(초) 이상 재생 시 스크로블링</string>
     <string name="scrobble_delay_percent">스크로블링 전송 기준(%)</string>
@@ -426,7 +426,7 @@
     <string name="crash_description">예상치 못한 오류가 발생했습니다. 문제 해결을 위해 오류 보고서를 공유해 주시면 감사하겠습니다</string>
     <string name="crash_share_logs">로그 공유</string>
     <string name="crash_share_title">오류 보고서 공유</string>
-    <string name="crash_report_subject">Metrolist 오류 보고서</string>
+    <string name="crash_report_subject">Loiter 오류 보고서</string>
     <string name="crash_close">닫기</string>
     <string name="crash_no_log">사용 가능한 오류 로그가 없습니다</string>
     <string name="palette_dynamic">다이내믹</string>
@@ -471,7 +471,7 @@
     <string name="clear_recognition_history_confirm">검색 기록을 모두 삭제하시겠습니까?</string>
     <string name="delete_from_history">기록에서 삭제</string>
     <string name="re_listen">다시 검색</string>
-    <string name="play_on_app">Metrolist로 재생</string>
+    <string name="play_on_app">Loiter로 재생</string>
     <string name="qs_tile_music_recognizer">노래 검색</string>
     <string name="recognition_notification_channel_name">노래 검색</string>
     <string name="recognition_notification_channel_desc">빠른 설정창에서 곡을 검색하는 동안 알림을 표시합니다</string>
@@ -479,7 +479,7 @@
     <string name="recognition_notification_processing">분석 중…</string>
     <string name="recognition_notification_no_match">일치하는 곡을 찾을 수 없습니다</string>
     <string name="recognition_notification_failed">검색 실패</string>
-    <string name="listen_on_metrolist">Metrolist로 재생</string>
+    <string name="listen_on_metrolist">Loiter로 재생</string>
     <string name="speed_dial">빠른 실행</string>
     <string name="pin_to_speed_dial">빠른 실행에 고정</string>
     <string name="unpin_from_speed_dial">빠른 실행에서 고정 해제</string>
@@ -512,7 +512,6 @@
     <string name="community_and_info">커뮤니티 및 정보</string>
     <string name="wanna_play_favorite_song">좋아하는 곡을 재생해 보시겠습니까?</string>
     <string name="yeah">좋습니다!</string>
-    <string name="stands_with_palestine">이 프로젝트는 팔레스타인과 연대합니다</string>
     <string name="android_auto">Android Auto</string>
     <string name="android_auto_visible_sections">표시할 섹션</string>
     <string name="android_auto_reorder_hint">섹션을 탭하여 활성화하거나 비활성화합니다.\n드래그 핸들을 길게 눌러 순서를 변경할 수 있습니다. 첫 번째 섹션이 기본으로 표시됩니다</string>
@@ -668,9 +667,9 @@
     <string name="discord_rpc_preview">Rich Presence 미리보기</string>
     <string name="discord_presence">활동 상태</string>
     <string name="discord_connect_description">Discord에 로그인하여 현재 듣고 있는 곡을 공유하세요</string>
-    <string name="discord_playing_metrolist">Metrolist에서 플레이 중</string>
-    <string name="discord_watching_metrolist">Metrolist에서 시청 중</string>
-    <string name="discord_competing_metrolist">Metrolist에서 경쟁 중</string>
+    <string name="discord_playing_metrolist">Loiter에서 플레이 중</string>
+    <string name="discord_watching_metrolist">Loiter에서 시청 중</string>
+    <string name="discord_competing_metrolist">Loiter에서 경쟁 중</string>
     <string name="discord_activity_name">활동 이름</string>
     <string name="discord_activity_name_description">활동의 사용자 지정 이름입니다. 비워두면 기본값을 사용합니다</string>
     <string name="discord_advanced_mode">고급 모드</string>
@@ -787,7 +786,7 @@
     <string name="fade">페이드</string>
     <string name="glow">글로우</string>
     <string name="slide">슬라이드</string>
-    <string name="wrapped_special_thanks">Metrolist를 제작한 MO Agamy에게 특별한 감사를 전합니다</string>
+    <string name="wrapped_special_thanks">Loiter를 제작한 MO Agamy에게 특별한 감사를 전합니다</string>
     <string name="wrapped_create_playlist">재생목록 만들기</string>
     <string name="wrapped_playlist_saved">재생목록이 저장되었습니다</string>
     <plurals name="profiles_count">

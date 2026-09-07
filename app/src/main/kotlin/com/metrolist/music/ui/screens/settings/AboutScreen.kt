@@ -1,6 +1,6 @@
 /**
  * Loiter Project (C) 2026
- * Licensed under GPL-3.0 | Forked from Metrolist | See git history for contributors
+ * Licensed under GPL-3.0 | Forked from the original project | See git history for contributors
  */
 
 package com.metrolist.music.ui.screens.settings
@@ -433,30 +433,10 @@ fun AboutScreen(
 
         Spacer(Modifier.height(24.dp))
 
-        // Project inspired by
-        Material3SettingsGroup(
-            title = stringResource(R.string.inspired_by),
-            items = listOf(
-                Material3SettingsItem(
-                    title = { Text("Metrolist") },
-                    description = { Text(stringResource(R.string.inspired_by_metrolist_desc)) },
-                    trailingContent = {
-                        Icon(
-                            painter = painterResource(R.drawable.github),
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    },
-                    onClick = { uriHandler.openUri("https://github.com/MetrolistGroup/Metrolist") }
-                )
-            )
-        )
-
         Spacer(Modifier.height(48.dp))
 
         Text(
-            text = stringResource(R.string.stands_with_palestine),
+            text = stringResource(R.string.i_need_sleep),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

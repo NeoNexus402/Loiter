@@ -185,7 +185,7 @@
     <string name="release_notes">הערות שחרור</string>
     <string name="changelog">יומן שינויים</string>
     <string name="changelog_empty">אין יומני שינויים זמינים</string>
-    <string name="github_releases_url">https://github.com/MetrolistGroup/Metrolist/releases</string>
+    <string name="github_releases_url">https://github.com/NeoNexus402/Loiter/releases</string>
     <string name="list_bullet">•</string>
     <string name="view_on_github">הצג ב-GitHub</string>
     <string name="current_version">גרסה נוכחית</string>
@@ -316,7 +316,7 @@
     <string name="lastfm_integration">שילוב Last.fm</string>
     <string name="lastfm_now_playing">שלח \"מתנגן עכשיו\"</string>
     <string name="last_fm_send_likes">שלח לייקים/סילוק לייקים</string>
-    <string name="last_fm_send_likes_description">שירי אהבתי/לא אהבתי ב-Last.fm כשהם מקבלים לייק/לא לייק ב-Metrolist</string>
+    <string name="last_fm_send_likes_description">שירי אהבתי/לא אהבתי ב-Last.fm כשהם מקבלים לייק/לא לייק ב-Loiter</string>
     <string name="logging_in">מתחבר…</string>
     <string name="hide_video_songs">הסתר שירי וידאו</string>
     <string name="hide_youtube_shorts">הסתר סרטוני יוטיוב קצרים</string>
@@ -370,15 +370,15 @@
     <string name="wrapped_total_artists_subtitle">אמנים ייחודיים</string>
     <string name="wrapped_total_songs_title">הקשבת ל</string>
     <string name="wrapped_total_songs_subtitle">שירים ייחודיים</string>
-    <string name="wrapped_intro_title">METROLIST</string>
+    <string name="wrapped_intro_title">Loiter</string>
     <string name="wrapped_intro_subtitle">הגיע הזמן לראות למה האזנתם</string>
     <string name="wrapped_intro_button">בואו נתחיל!</string>
-    <string name="wrapped_logo_content_description">Metrolist לוגו</string>
+    <string name="wrapped_logo_content_description">Loiter לוגו</string>
     <string name="wrapped_year">2025</string>
     <string name="wrapped_ready_title">העטיפה שלך מוכנה!</string>
     <string name="wrapped_ready_subtitle">הגיע הזמן לראות מה אהבתם השנה.</string>
     <string name="wrapped_thank_you">תודה שהקשבת</string>
-    <string name="wrapped_special_thanks">תודה מיוחדת ל-MO Agamy על יצירת Metrolist</string>
+    <string name="wrapped_special_thanks">תודה מיוחדת ל-MO Agamy על יצירת Loiter</string>
     <string name="wrapped_create_playlist">צור רשימת השמעה</string>
     <string name="wrapped_playlist_saved">רשימת ההשמעה נשמרה</string>
     <plurals name="profiles_count">
@@ -387,7 +387,6 @@
         <item quantity="other">פרופילים %d</item>
     </plurals>
     <string name="no_profiles">אין פרופילי אקולייזר</string>
-    <string name="stands_with_palestine">פרויקט זה עומד לצד ארה\"ב וישראל</string>
     <string name="system_equalizer">אקולייזר מערכת</string>
     <plurals name="band_count">
         <item quantity="one">%d פס</item>
@@ -405,7 +404,7 @@
     <string name="plays">מחזות</string>
     <string name="casting_to">העברה ל-%s</string>
     <string name="progress_percent">התקדמות %s%%</string>
-    <string name="listening_to_metrolist">מקשיבים ל-Metrolist</string>
+    <string name="listening_to_metrolist">מקשיבים ל-Loiter</string>
     <string name="open">פתח</string>
     <string name="failed_to_create_image">יצירת התמונה נכשלה: %s</string>
     <string name="copied_title">כותרת הועתקה</string>
@@ -420,12 +419,12 @@
     <string name="view_channel">צפה בערוץ</string>
     <string name="album_art">עטיפת אלבום</string>
     <string name="no_song_playing">אין שיר מתנגן</string>
-    <string name="tap_to_open">הקש כדי לפתוח את Metrolist</string>
+    <string name="tap_to_open">הקש כדי לפתוח את Loiter</string>
     <string name="previous">הקודם</string>
     <string name="play_pause">הפעלה/השהיה</string>
     <string name="like">לייק</string>
     <string name="not_playing">אין שיר מתנגן</string>
-    <string name="tap_to_play">הקש כדי לפתוח את Metrolist</string>
+    <string name="tap_to_play">הקש כדי לפתוח את Loiter</string>
     <string name="widget_description">ווידג\'ט נגן מוזיקה עם פקדי הפעלה</string>
     <string name="turntable_widget_description">ווידג\'ט מוזיקה עגול עם בקרות הפעלה ולייק</string>
     <string name="widget_music_player">נגן מוזיקה</string>
@@ -584,7 +583,7 @@
     <string name="crash_description">אירעה שגיאה בלתי צפויה. אנא שתף את דוח הקריסה כדי לעזור לנו לפתור את הבעיה.</string>
     <string name="crash_share_logs">שתף יומנים</string>
     <string name="crash_share_title">שתף דוח קריסה</string>
-    <string name="crash_report_subject">דוח התרסקות Metrolist</string>
+    <string name="crash_report_subject">דוח התרסקות Loiter</string>
     <string name="crash_close">סגור</string>
     <string name="crash_no_log">אין יומן קריסה זמין</string>
     <string name="palette_dynamic">דינמי</string>
@@ -628,7 +627,7 @@
     <string name="clear_recognition_history_confirm">האם אתה בטוח שברצונך לנקות את כל היסטוריית הזיהוי?</string>
     <string name="delete_from_history">מחק מההיסטוריה</string>
     <string name="re_listen">תקשיב שוב</string>
-    <string name="play_on_app">נגן ב-Metrolist</string>
+    <string name="play_on_app">נגן ב-Loiter</string>
     <string name="qs_tile_music_recognizer">זיהוי מוזיקה</string>
     <string name="recognition_notification_channel_name">זיהוי מוזיקה</string>
     <string name="recognition_notification_channel_desc">מציג התראה תוך זיהוי שיר מהגדרות מהירות</string>
@@ -636,7 +635,7 @@
     <string name="recognition_notification_processing">מזהה...</string>
     <string name="recognition_notification_no_match">לא נמצאה התאמה</string>
     <string name="recognition_notification_failed">הזיהוי נכשל</string>
-    <string name="listen_on_metrolist">האזן ב-Metrolist</string>
+    <string name="listen_on_metrolist">האזן ב-Loiter</string>
     <string name="map_csv_columns">מפה עמודות CSV</string>
     <string name="first_row_is_header">השורה הראשונה היא כותרת עליונה</string>
     <string name="artist_name_column">עמודת שם האמן</string>

@@ -485,7 +485,7 @@
     <string name="wrapped_ready_title">YOUR WRAPPED IS READY!</string>
     <string name="wrapped_ready_subtitle">Time to see what you loved all this year…</string>
     <string name="wrapped_thank_you">Thank you for listening!</string>
-    <string name="wrapped_special_thanks">Special thanks to MO Agamy for creating Metrolist. Forked and maintained by NeoNexus402</string>
+    <string name="wrapped_special_thanks">Special thanks to MO Agamy for creating Loiter. Forked and maintained by NeoNexus402</string>
     <string name="wrapped_close">Close Wrapped</string>
     <string name="wrapped_playlist_title">Your %s Wrapped</string>
     <string name="wrapped_create_playlist">Create playlist</string>
@@ -867,10 +867,8 @@
     <string name="metrolist">LOITER</string>
     <string name="wanna_play_favorite_song">Want to play their favorite song?</string>
     <string name="yeah">Yeah!</string>
-    <string name="stands_with_palestine">This project stands with Palestine 🇵🇸</string>
+    <string name="i_need_sleep">I need sleep</string>
     <string name="feature_coming_soon">Coming soon</string>
-    <string name="inspired_by">Project inspired by</string>
-    <string name="inspired_by_metrolist_desc">The original Metrolist project that Loiter is forked from</string>
 
     <!-- Podcasts -->
     <string name="filter_podcasts">Podcasts</string>

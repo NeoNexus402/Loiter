@@ -19,8 +19,8 @@ enum class LayoutTheme(
     val description: String,
     val isComingSoon: Boolean = false,
 ) {
-    METROLIST("Metrolist", "The default Metrolist experience — Material 3 with dynamic colors"),
-    LOITER("Loiter", "Ultra-dark theme with lavender accents and dynamic album-art colors"),
+    METROLIST("Metrolist", "Inspired by the Metrolist app"),
+    LOITER("Loiter", "The default theme of Loiter"),
     YT_MUSIC("YouTube Music", "Inspired by YouTube Music — full-bleed thumbnails, compact controls", isComingSoon = true),
     SPOTIFY("Spotify", "Inspired by Spotify — bold typography, dark accents, gradient player", isComingSoon = true),
     BLACKHOLE("Blackhole", "Inspired by Blackhole — large artwork, heavy blur, wave animations"),

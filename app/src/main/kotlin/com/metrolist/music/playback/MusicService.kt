@@ -1,5 +1,5 @@
 /**
- * Metrolist Project (C) 2026
+ * Loiter Project (C) 2026
  * Licensed under GPL-3.0 | See git history for contributors
  */
 
@@ -197,7 +197,7 @@ import com.metrolist.music.utils.get
 import com.metrolist.music.utils.reportException
 import com.metrolist.innertubex.extraction.ContentHints
 import com.metrolist.music.utils.InnerTubeXPlayer
-import com.metrolist.music.widget.MetrolistWidgetManager
+import com.metrolist.music.widget.LoiterWidgetManager
 import com.metrolist.music.widget.MusicWidgetReceiver
 import com.metrolist.music.widget.PlaylistWidgetReceiver
 import com.metrolist.music.ui.utils.resize
@@ -267,7 +267,7 @@ class MusicService :
     lateinit var eqProfileRepository: EQProfileRepository
 
     @Inject
-    lateinit var widgetManager: MetrolistWidgetManager
+    lateinit var widgetManager: LoiterWidgetManager
 
     @Inject
     lateinit var listenTogetherManager: com.metrolist.music.listentogether.ListenTogetherManager

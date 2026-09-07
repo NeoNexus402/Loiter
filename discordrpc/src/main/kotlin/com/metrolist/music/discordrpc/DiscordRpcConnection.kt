@@ -107,7 +107,7 @@ class DiscordRpcConnection(
             Presence(
                 activities = listOf(
                     Activity(
-                        name = name ?: "Metrolist",
+                        name = name ?: "Loiter",
                         type = type.value,
                         applicationId = applicationId,
                         state = state,
